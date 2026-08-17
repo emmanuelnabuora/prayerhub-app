@@ -1,0 +1,48 @@
+{
+  "name": "@prayerhub/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "build": "nest build",
+    "migrate": "psql \"$DATABASE_URL\" -f migrations/0001_init.sql && psql \"$DATABASE_URL\" -f migrations/0002_live_rooms.sql && psql \"$DATABASE_URL\" -f migrations/0003_group_schedule.sql && psql \"$DATABASE_URL\" -f migrations/0004_bible.sql && psql \"$DATABASE_URL\" -f migrations/0005_social.sql && psql \"$DATABASE_URL\" -f migrations/0006_messaging.sql && psql \"$DATABASE_URL\" -f migrations/0007_organizations.sql && psql \"$DATABASE_URL\" -f migrations/0008_intelligence.sql",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.4.0",
+    "@nestjs/core": "^10.4.0",
+    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/passport": "^10.0.3",
+    "@nestjs/platform-express": "^10.4.0",
+    "@nestjs/platform-socket.io": "^10.4.0",
+    "@nestjs/websockets": "^10.4.0",
+    "@nestjs/throttler": "^6.2.1",
+    "argon2": "^0.41.1",
+    "axios": "^1.7.5",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@aws-sdk/client-s3": "^3.637.0",
+    "@aws-sdk/s3-request-presigner": "^3.637.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "livekit-server-sdk": "^2.9.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.12.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.4.5",
+    "@nestjs/testing": "^10.4.0",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.0",
+    "@types/passport-jwt": "^4.0.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

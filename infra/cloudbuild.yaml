@@ -1,0 +1,77 @@
+# Cloud Build pipeline — builds and deploys both the API and admin console to
+# Cloud Run. Trigger this from a Cloud Build GitHub trigger on push to main, or
+# run manually: `gcloud builds submit --config infra/cloudbuild.yaml`
+#
+# Required substitutions (set via trigger config or --substitutions):
+#   _REGION            e.g. us-central1
+#   _API_SERVICE       e.g. prayerhub-api
+#   _ADMIN_SERVICE     e.g. prayerhub-admin
+#   _CLOUDSQL_INSTANCE e.g. project:region:instance
+#   _VPC_CONNECTOR     e.g. prayerhub-connector (from `terraform output vpc_connector_name`)
+#   _API_URL           public URL of the API, for the admin console's build-time env var
+
+steps:
+  # ---- API image ----
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'apps/api/Dockerfile', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/api:$SHORT_SHA', '.']
+    id: build-api
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/api:$SHORT_SHA']
+    id: push-api
+    waitFor: ['build-api']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_API_SERVICE}'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/api:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--vpc-connector=${_VPC_CONNECTOR}'
+      - '--vpc-egress=private-ranges-only'
+      - '--add-cloudsql-instances=${_CLOUDSQL_INSTANCE}'
+      - '--set-secrets=DATABASE_URL=prayerhub-database-url:latest,JWT_ACCESS_SECRET=prayerhub-jwt-access:latest,JWT_REFRESH_SECRET=prayerhub-jwt-refresh:latest,LIVEKIT_API_KEY=prayerhub-livekit-key:latest,LIVEKIT_API_SECRET=prayerhub-livekit-secret:latest,ANTHROPIC_API_KEY=prayerhub-anthropic-key:latest,VOYAGE_API_KEY=prayerhub-voyage-key:latest'
+      - '--allow-unauthenticated'
+    id: deploy-api
+    waitFor: ['push-api']
+
+  # ---- Admin console image (depends on the API URL being known at build time) ----
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-f'
+      - 'apps/web-admin/Dockerfile'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_API_URL=${_API_URL}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/admin:$SHORT_SHA'
+      - '.'
+    id: build-admin
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/admin:$SHORT_SHA']
+    id: push-admin
+    waitFor: ['build-admin']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_ADMIN_SERVICE}'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/admin:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+    id: deploy-admin
+    waitFor: ['push-admin']
+
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/api:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/prayerhub/admin:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,100 @@
+/* Brand tokens carried over from the PrayerHubApp mobile theme and the
+   original logo/landing-page work: deep indigo + warm parchment, Fraunces
+   serif for headings. The admin console reuses the identity rather than
+   inventing a separate "corporate dashboard" look — see the product spec's
+   instruction that PrayerHubApp should never feel like a bare productivity
+   tool, extended here to its admin surface too. */
+:root {
+  --indigo: #2B2A55;
+  --indigo-dark: #1F1E40;
+  --parchment: #F4EEE0;
+  --flame: #E8A15D;
+  --text: #1F1E33;
+  --muted: #6E6D82;
+  --border: #E2E0D5;
+  --danger: #C0392B;
+  --success: #2E9B5F;
+  --white: #FFFFFF;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--parchment);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+h1, h2, h3 { font-family: Georgia, 'Times New Roman', serif; color: var(--indigo); margin: 0; }
+
+a { color: inherit; }
+
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--indigo);
+  color: var(--white);
+  padding: 24px 16px;
+  flex-shrink: 0;
+}
+.sidebar h1 { color: var(--white); font-size: 18px; margin-bottom: 24px; }
+.sidebar a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #EAE9F5;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.sidebar a:hover { background: rgba(255,255,255,0.08); }
+
+.main { flex: 1; padding: 32px 40px; max-width: 1100px; }
+
+.card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border-radius: 12px; padding: 18px; border: 1px solid var(--border); }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--indigo); }
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.badge-high { background: #FBE4E1; color: var(--danger); }
+.badge-medium { background: #FCEBD8; color: #B36B1D; }
+.badge-low { background: #E4EFE9; color: var(--success); }
+.badge-verified { background: #E4EFE9; color: var(--success); }
+
+button, .btn {
+  background: var(--indigo);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button.secondary { background: var(--white); color: var(--indigo); border: 1px solid var(--border); }
+button.danger { background: var(--danger); }
+
+.login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-card { background: var(--white); border-radius: 16px; padding: 40px; width: 360px; border: 1px solid var(--border); }
+.login-card h1 { margin-bottom: 6px; }
+.login-card p.subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 12px; font-size: 14px;
+}
+.error-text { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
