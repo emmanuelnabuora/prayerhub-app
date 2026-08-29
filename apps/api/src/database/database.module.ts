@@ -8,7 +8,7 @@ export const PG_POOL = 'PG_POOL';
   providers: [
     {
       provide: PG_POOL,
-      useFactory: () => new Pool({ connectionString: process.env.DATABASE_URL }),
+      useFactory: () => new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }),
     },
   ],
   exports: [PG_POOL],
