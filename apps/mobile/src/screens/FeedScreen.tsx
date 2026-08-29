@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFeed, useCreatePost, useReactToPost } from '../api/social';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -79,7 +79,10 @@ function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => v
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Share with the Community</Text>
           <View style={styles.typeRow}>
@@ -111,7 +114,7 @@ function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => v
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

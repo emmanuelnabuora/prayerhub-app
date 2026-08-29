@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useDailyVerse } from '../api/bible';
 import { useLiveRooms } from '../api/live';
 import { useSuggestedGroups } from '../api/ai';
+import { useCurrentUser } from '../api/users';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
@@ -13,12 +14,14 @@ import FlameMark from '../components/FlameMark';
 // a deep-indigo header that yields to warm parchment content below, echoing
 // candlelight giving way to morning. The greeting is time-of-day aware rather
 // than a static string, which costs nothing and makes the app feel present.
-function timeOfDayGreeting() {
+function timeOfDayGreeting(name?: string) {
   const hour = new Date().getHours();
-  if (hour < 5) return 'Peace in the quiet hours';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Peace be with you this evening';
+  const firstName = name?.split(' ')[0];
+  const suffix = firstName ? `, ${firstName}` : '';
+  if (hour < 5) return `Peace in the quiet hours${suffix}`;
+  if (hour < 12) return `Good morning${suffix} 👋`;
+  if (hour < 18) return `Good afternoon${suffix} 👋`;
+  return `Peace be with you this evening${suffix}`;
 }
 
 export default function HomeScreen() {
@@ -26,13 +29,14 @@ export default function HomeScreen() {
   const { data: dailyVerse, isLoading: verseLoading } = useDailyVerse();
   const { data: rooms } = useLiveRooms();
   const { data: suggestedGroups } = useSuggestedGroups();
+  const { data: currentUser } = useCurrentUser();
   const liveNow = rooms?.filter((r: any) => r.status === 'live') ?? [];
 
   return (
     <View style={styles.root}>
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.greeting} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting()}</Text>
+          <Text style={styles.greeting} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting(currentUser?.displayName)}</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Search')}
             accessibilityRole="button"

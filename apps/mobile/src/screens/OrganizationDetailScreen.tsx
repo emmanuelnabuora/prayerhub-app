@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useOrganization, useOrganizationAnnouncements, useFollowOrganization, usePostAnnouncement } from '../api/organizations';
 import { colors, type, space, radius } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -80,9 +80,9 @@ export default function OrganizationDetailScreen({ route, navigation }: any) {
       />
 
       <Modal visible={announceModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <AnnouncementForm onSubmit={(a) => { postAnnouncement.mutate(a); setAnnounceModalVisible(false); }} onClose={() => setAnnounceModalVisible(false)} />
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -99,7 +99,7 @@ function AnnouncementForm({ onSubmit, onClose }: { onSubmit: (a: { title: string
       <TouchableOpacity style={styles.followButton} onPress={() => title.trim() && body.trim() && onSubmit({ title, body })} accessibilityRole="button" accessibilityLabel="Post announcement">
         <Text style={styles.followButtonText}>Post</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+      <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
     </View>
   );
 }

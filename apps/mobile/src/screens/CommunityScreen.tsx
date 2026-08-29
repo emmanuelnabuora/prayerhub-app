@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useDiscoverGroups, useMyGroups, useCreateGroup, useJoinGroup } from '../api/groups';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -115,6 +115,7 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
 
   const submit = () => {
     if (!name.trim()) return;
+    Keyboard.dismiss();
     createGroup.mutate(
       { name, description, visibility },
       { onSuccess: (group) => { setName(''); setDescription(''); onClose(); onCreated(group.id); } },
@@ -123,7 +124,7 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Start a Group</Text>
           <TextInput style={styles.input} placeholder="Group name" value={name} onChangeText={setName} accessibilityLabel="Group name" />
@@ -146,7 +147,7 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

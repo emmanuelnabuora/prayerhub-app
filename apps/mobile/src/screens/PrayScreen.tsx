@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { usePrayerFeed, useMarkPrayed, useCreatePrayerRequest } from '../api/prayers';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -87,6 +87,7 @@ function NewPrayerModal({ visible, onClose }: { visible: boolean; onClose: () =>
 
   const submit = () => {
     if (!title.trim() || !description.trim()) return;
+    Keyboard.dismiss();
     createPrayer.mutate(
       { title, description, visibility },
       { onSuccess: () => { setTitle(''); setDescription(''); onClose(); } },
@@ -95,7 +96,10 @@ function NewPrayerModal({ visible, onClose }: { visible: boolean; onClose: () =>
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Share a Prayer Request</Text>
           <TextInput
@@ -136,11 +140,11 @@ function NewPrayerModal({ visible, onClose }: { visible: boolean; onClose: () =>
           >
             {createPrayer.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Post Request</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel">
+          <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel">
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

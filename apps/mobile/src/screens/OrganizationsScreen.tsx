@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useOrganizations, useCreateOrganization } from '../api/organizations';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -77,7 +77,7 @@ function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClos
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Register a Church or Ministry</Text>
           <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} accessibilityLabel="Organization name" />
@@ -98,9 +98,9 @@ function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClos
           <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={createOrg.isPending} accessibilityRole="button" accessibilityLabel="Register">
             {createOrg.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Register</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

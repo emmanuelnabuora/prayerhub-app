@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useLiveRooms, useCreateRoom } from '../api/live';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
@@ -72,6 +72,7 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
 
   const submit = () => {
     if (!title.trim()) return;
+    Keyboard.dismiss();
     createRoom.mutate(
       { title, topic },
       { onSuccess: (room) => { setTitle(''); onClose(); onCreated(room.id); } },
@@ -80,7 +81,10 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Start a Prayer Room</Text>
           <TextInput style={styles.input} placeholder="Room title" value={title} onChangeText={setTitle} accessibilityLabel="Room title" />
@@ -94,11 +98,11 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
           >
             {createRoom.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Go Live</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel">
+          <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel">
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

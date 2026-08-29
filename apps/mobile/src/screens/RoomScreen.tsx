@@ -30,7 +30,7 @@ export default function RoomScreen({ route }: any) {
     onParticipantRemoved: () => refetch(),
   });
 
-  const { connected, activeSpeakers, setMicEnabled } = useLiveKitRoom(tokenData?.sfuUrl, tokenData?.token);
+  const { connected, activeSpeakers, setMicEnabled, unsupported } = useLiveKitRoom(tokenData?.sfuUrl, tokenData?.token);
 
   React.useEffect(() => {
     joinToken.mutate(undefined, { onSuccess: setTokenData });
@@ -44,6 +44,17 @@ export default function RoomScreen({ route }: any) {
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.loadingRoot}>
         <FlameMark size={44} />
         <Text style={styles.loadingText}>Entering the room…</Text>
+      </LinearGradient>
+    );
+  }
+
+  if (unsupported) {
+    return (
+      <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.loadingRoot}>
+        <FlameMark size={44} />
+        <Text style={styles.loadingText}>
+          Live audio needs the full PrayerHubApp build{'\n'}(not available in Expo Go preview)
+        </Text>
       </LinearGradient>
     );
   }

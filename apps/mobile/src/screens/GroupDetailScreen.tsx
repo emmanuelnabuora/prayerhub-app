@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useGroup, useGroupMembers, useJoinGroup } from '../api/groups';
 import { useCreatePrayerRequest } from '../api/prayers';
 import { colors, type, space, radius, shadow } from '../theme';
@@ -27,7 +27,15 @@ export default function GroupDetailScreen({ route, navigation }: any) {
         <View style={styles.header}>
           <Text style={styles.groupType}>{group.groupType.replace('_', ' ')}</Text>
           <Text style={styles.groupName} maxFontSizeMultiplier={1.3}>{group.name}</Text>
-          {!!group.description && <Text style={styles.groupDescription}>{group.description}</Text>}
+          {group.groupType === 'bible_study' && !!group.description && (
+            <View style={styles.studyCard}>
+              <Text style={styles.studyLabel}>Current Study</Text>
+              <Text style={styles.studyText} maxFontSizeMultiplier={1.4}>{group.description}</Text>
+            </View>
+          )}
+          {group.groupType !== 'bible_study' && !!group.description && (
+            <Text style={styles.groupDescription}>{group.description}</Text>
+          )}
           <Text style={styles.groupMeta}>{group.memberCount} members</Text>
 
           {group.recurringSchedule && (
@@ -78,7 +86,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
       />
 
       <Modal visible={requestModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Prayer Request for {group.name}</Text>
             <TextInput
@@ -103,11 +111,11 @@ export default function GroupDetailScreen({ route, navigation }: any) {
             >
               {createPrayer.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Post</Text>}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setRequestModalVisible(false)} accessibilityRole="button" accessibilityLabel="Cancel">
+            <TouchableOpacity onPress={() => { Keyboard.dismiss(); setRequestModalVisible(false); }} accessibilityRole="button" accessibilityLabel="Cancel">
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -122,6 +130,9 @@ const styles = StyleSheet.create({
   groupDescription: { color: colors.text, marginBottom: space.sm, lineHeight: type.size.base * type.lineHeight.normal },
   groupMeta: { color: colors.mutedText, fontSize: type.size.sm, marginBottom: space.md },
   scheduleCard: { backgroundColor: colors.card, borderRadius: radius.md, padding: space.md, marginBottom: space.md, borderWidth: 1, borderColor: colors.cardBorder, borderLeftWidth: 3, borderLeftColor: colors.flame },
+  studyCard: { backgroundColor: colors.indigo, borderRadius: radius.md, padding: space.md, marginBottom: space.sm },
+  studyLabel: { color: colors.flame, fontSize: type.size.xs, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4, fontWeight: '700' },
+  studyText: { fontFamily: type.fontFamily.displayItalic, color: colors.textOnDark, fontSize: type.size.base, lineHeight: type.size.base * type.lineHeight.relaxed },
   scheduleTitle: { fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase', marginBottom: 4 },
   scheduleText: { color: colors.text, fontWeight: '700' },
   primaryButton: { backgroundColor: colors.indigo, borderRadius: radius.md, padding: space.md, alignItems: 'center' },
