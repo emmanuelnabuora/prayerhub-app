@@ -9,20 +9,13 @@ import {
 } from '@expo-google-fonts/fraunces';
 import { queryClient } from './src/api/queryClient';
 import { AUTH_STATUS_KEY, getStoredAccessToken } from './src/api/auth';
+import { useCurrentUser } from './src/api/users';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/LoginScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 
 SplashScreen.preventAutoHideAsync();
 
-// Fraunces is the display face across the whole brand system (landing page
-// wordmark, logo, and now the app) — held behind the splash screen rather than
-// flashing system-font titles for a frame before swapping, which would read as
-// unpolished on a screen this typography-forward.
-
-// Reads whether a token exists in SecureStore on mount, then trusts React
-// Query's cache going forward — useLogin/useRegister/useLogout write directly
-// to this cache key so the switch between LoginScreen and the main app is
-// reactive with no prop drilling or separate context needed.
 function useIsAuthenticated() {
   return useQuery({
     queryKey: AUTH_STATUS_KEY,
@@ -34,10 +27,22 @@ function useIsAuthenticated() {
   });
 }
 
+// Once authenticated, checks whether the user has ever saved interests —
+// zero interests means they registered but never completed onboarding
+// (a brand-new account, or one that predates this feature). Completing
+// onboarding calls useUpdateProfile, which invalidates this same query,
+// so the switch to RootNavigator happens automatically with no extra state.
+function AuthenticatedContent() {
+  const { data: user, isLoading } = useCurrentUser();
+  if (isLoading) return null;
+  const hasCompletedOnboarding = (user?.interests?.length ?? 0) > 0;
+  return hasCompletedOnboarding ? <RootNavigator /> : <OnboardingScreen onComplete={() => {}} />;
+}
+
 function AppContent() {
   const { data: isAuthenticated, isLoading } = useIsAuthenticated();
   if (isLoading) return null;
-  return isAuthenticated ? <RootNavigator /> : <LoginScreen />;
+  return isAuthenticated ? <AuthenticatedContent /> : <LoginScreen />;
 }
 
 export default function App() {

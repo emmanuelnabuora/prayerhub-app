@@ -9,9 +9,14 @@ export class UsersService {
 
   async findById(id: string, requestingUserId?: string) {
     const result = await this.db.query(
-      `select id, username, display_name, avatar_url, country, timezone, languages,
-              church_affiliation, bio, created_at
-       from users where id = $1 and deleted_at is null`,
+      `select u.id, u.username, u.display_name as "displayName", u.avatar_url as "avatarUrl",
+              u.country, u.timezone, u.languages,
+              u.church_affiliation as "churchAffiliation", u.bio, u.created_at as "createdAt",
+              coalesce(
+                (select array_agg(ui.interest) from user_interests ui where ui.user_id = u.id),
+                array[]::text[]
+              ) as interests
+       from users u where u.id = $1 and u.deleted_at is null`,
       [id],
     );
     if (!result.rowCount) throw new NotFoundException('User not found');
