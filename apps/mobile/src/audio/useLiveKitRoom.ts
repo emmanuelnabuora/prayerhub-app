@@ -25,7 +25,8 @@ export function useLiveKitRoom(sfuUrl: string | undefined, token: string | undef
     (async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require('@livekit/react-native');
+        const livekitReactNative = require('@livekit/react-native');
+        livekitReactNative.registerGlobals();
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { Room, RoomEvent } = require('livekit-client');
         if (cancelled) return;

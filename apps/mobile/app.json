@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "PrayerHubApp",
+    "slug": "prayerhubapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.prayerhubapp.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.prayerhubapp.mobile"
+    },
+    "plugins": [
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "04ed9c91-3eab-424e-91cc-9459e01806f5"
+      }
+    }
+  }
+}

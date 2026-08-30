@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useDiscoverGroups, useMyGroups, useCreateGroup, useJoinGroup } from '../api/groups';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -108,6 +109,7 @@ export default function CommunityScreen({ navigation }: any) {
 }
 
 function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private' | 'invite_only'>('public');
@@ -125,7 +127,7 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Start a Group</Text>
           <TextInput style={styles.input} placeholder="Group name" value={name} onChangeText={setName} accessibilityLabel="Group name" />
           <TextInput style={[styles.input, styles.textArea]} placeholder="Description" value={description} onChangeText={setDescription} multiline accessibilityLabel="Group description" />

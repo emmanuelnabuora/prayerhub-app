@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useOrganization, useOrganizationAnnouncements, useFollowOrganization, usePostAnnouncement } from '../api/organizations';
 import { colors, type, space, radius } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -89,10 +90,11 @@ export default function OrganizationDetailScreen({ route, navigation }: any) {
 }
 
 function AnnouncementForm({ onSubmit, onClose }: { onSubmit: (a: { title: string; body: string }) => void; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   return (
-    <View style={styles.modalCard}>
+    <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
       <Text style={styles.modalTitle}>New Announcement</Text>
       <TextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} accessibilityLabel="Announcement title" />
       <TextInput style={[styles.input, styles.textArea]} placeholder="Message" value={body} onChangeText={setBody} multiline accessibilityLabel="Announcement message" />

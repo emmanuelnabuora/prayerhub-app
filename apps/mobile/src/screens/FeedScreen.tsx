@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFeed, useCreatePost, useReactToPost } from '../api/social';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -65,6 +66,7 @@ export default function FeedScreen() {
 }
 
 function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const [type_, setType] = useState<'text' | 'scripture'>('text');
   const [body, setBody] = useState('');
   const [scriptureReference, setScriptureReference] = useState('');
@@ -83,7 +85,7 @@ function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => v
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
       >
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Share with the Community</Text>
           <View style={styles.typeRow}>
             {(['text', 'scripture'] as const).map((t) => (

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { usePrayerFeed, useMarkPrayed, useCreatePrayerRequest } from '../api/prayers';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -80,6 +81,7 @@ export default function PrayScreen() {
 }
 
 function NewPrayerModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('public');
@@ -100,7 +102,7 @@ function NewPrayerModal({ visible, onClose }: { visible: boolean; onClose: () =>
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
       >
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Share a Prayer Request</Text>
           <TextInput
             style={styles.input}

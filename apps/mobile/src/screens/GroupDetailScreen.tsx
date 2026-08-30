@@ -3,12 +3,14 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useGroup, useGroupMembers, useJoinGroup } from '../api/groups';
 import { useCreatePrayerRequest } from '../api/prayers';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
 const DAY_LABELS: Record<string, string> = { MO: 'Mon', TU: 'Tue', WE: 'Wed', TH: 'Thu', FR: 'Fri', SA: 'Sat', SU: 'Sun' };
 
 export default function GroupDetailScreen({ route, navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { groupId } = route.params;
   const { data: group, isLoading } = useGroup(groupId);
   const { data: members } = useGroupMembers(groupId);
@@ -87,7 +89,7 @@ export default function GroupDetailScreen({ route, navigation }: any) {
 
       <Modal visible={requestModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
             <Text style={styles.modalTitle}>Prayer Request for {group.name}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}

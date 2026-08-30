@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useLiveRooms, useCreateRoom } from '../api/live';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -66,6 +67,7 @@ export default function LiveScreen({ navigation }: any) {
 }
 
 function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('Morning Prayer');
   const createRoom = useCreateRoom();
@@ -85,7 +87,7 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
       >
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Start a Prayer Room</Text>
           <TextInput style={styles.input} placeholder="Room title" value={title} onChangeText={setTitle} accessibilityLabel="Room title" />
           <TextInput style={styles.input} placeholder="Topic (e.g. Healing Prayer)" value={topic} onChangeText={setTopic} accessibilityLabel="Room topic" />

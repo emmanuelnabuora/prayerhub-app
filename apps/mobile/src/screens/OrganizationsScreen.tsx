@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useOrganizations, useCreateOrganization } from '../api/organizations';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -62,6 +63,7 @@ export default function OrganizationsScreen({ navigation }: any) {
 }
 
 function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [type_, setType] = useState<'church' | 'ministry'>('church');
   const createOrg = useCreateOrganization();
@@ -78,7 +80,7 @@ function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClos
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Register a Church or Ministry</Text>
           <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} accessibilityLabel="Organization name" />
           <View style={styles.typeRow}>

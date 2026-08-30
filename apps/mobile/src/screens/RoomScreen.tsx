@@ -12,7 +12,7 @@ import { colors, type, space, radius } from '../theme';
 // listener) drive both the mic UI and what actions are offered — a listener
 // never even sees a mute button, because they were never issued publish
 // rights by the SFU token in the first place (apps/api/src/live/sfu.provider.ts).
-export default function RoomScreen({ route }: any) {
+export default function RoomScreen({ route, navigation }: any) {
   const { roomId } = route.params;
   const { data: room, refetch } = useRoom(roomId);
   const joinToken = useJoinRoomToken(roomId);
@@ -110,14 +110,23 @@ export default function RoomScreen({ route }: any) {
             <Text style={styles.handButtonText}>✋ Raise Hand</Text>
           </TouchableOpacity>
         )}
-        {tokenData?.role === 'host' && (
+        {tokenData?.role === 'host' ? (
           <TouchableOpacity
             style={styles.endButton}
-            onPress={() => endRoom.mutate()}
+            onPress={() => endRoom.mutate(undefined, { onSuccess: () => navigation.goBack() })}
             accessibilityRole="button"
             accessibilityLabel="End the prayer room for everyone"
           >
             <Text style={styles.endButtonText}>End Room</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.leaveButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Leave the room quietly"
+          >
+            <Text style={styles.leaveButtonText}>Leave Quietly</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -142,4 +151,6 @@ const styles = StyleSheet.create({
   handButtonText: { color: '#fff', fontWeight: '700' },
   endButton: { backgroundColor: colors.danger, borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md },
   endButtonText: { color: '#fff', fontWeight: '700' },
+  leaveButton: { backgroundColor: 'transparent', borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md },
+  leaveButtonText: { color: 'rgba(255,255,255,0.6)', fontWeight: '600' },
 });
