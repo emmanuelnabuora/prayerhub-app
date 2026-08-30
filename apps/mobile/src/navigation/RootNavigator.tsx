@@ -20,6 +20,7 @@ import TestimoniesScreen from '../screens/TestimoniesScreen';
 import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import AssistantScreen from '../screens/AssistantScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import { theme, colors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -91,6 +92,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="BibleReader" component={BibleReaderScreen} />
       <HomeStack.Screen name="Chat" component={ChatScreen} />
       <HomeStack.Screen name="Assistant" component={AssistantScreen} />
+      <HomeStack.Screen name="Notifications" component={NotificationsScreen} />
     </HomeStack.Navigator>
   );
 }

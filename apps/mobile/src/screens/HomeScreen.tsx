@@ -6,6 +6,7 @@ import { useDailyVerse } from '../api/bible';
 import { useLiveRooms } from '../api/live';
 import { useSuggestedGroups } from '../api/ai';
 import { useCurrentUser } from '../api/users';
+import { useUnreadNotificationCount } from '../api/notifications';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const { data: rooms } = useLiveRooms();
   const { data: suggestedGroups } = useSuggestedGroups();
   const { data: currentUser } = useCurrentUser();
+  const { data: unread } = useUnreadNotificationCount();
   const liveNow = rooms?.filter((r: any) => r.status === 'live') ?? [];
 
   return (
@@ -37,14 +39,29 @@ export default function HomeScreen() {
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.header}>
         <View style={styles.headerRow}>
           <Text style={styles.greeting} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting(currentUser?.displayName)}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Search')}
-            accessibilityRole="button"
-            accessibilityLabel="Search PrayerHubApp"
-            hitSlop={10}
-          >
-            <Text style={styles.searchIcon}>🔍</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Notifications')}
+              accessibilityRole="button"
+              accessibilityLabel={unread?.count ? `Notifications, ${unread.count} unread` : 'Notifications'}
+              hitSlop={10}
+            >
+              <Text style={styles.searchIcon}>🔔</Text>
+              {!!unread?.count && (
+                <View style={styles.notifBadge}>
+                  <Text style={styles.notifBadgeText}>{unread.count > 9 ? '9+' : unread.count}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Search')}
+              accessibilityRole="button"
+              accessibilityLabel="Search PrayerHubApp"
+              hitSlop={10}
+            >
+              <Text style={styles.searchIcon}>🔍</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -148,6 +165,11 @@ const styles = StyleSheet.create({
     fontFamily: type.fontFamily.display, fontSize: type.size.xl, color: colors.textOnDark,
   },
   searchIcon: { fontSize: 20 },
+  notifBadge: {
+    position: 'absolute', top: -4, right: -6, backgroundColor: colors.live,
+    borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+  },
+  notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
   container: { flex: 1 },
   content: { padding: space.lg, paddingTop: space.lg, paddingBottom: space.xxl, marginTop: -space.lg },
   card: {
