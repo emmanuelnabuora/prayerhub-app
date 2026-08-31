@@ -38,3 +38,7 @@ class ScheduleDto {
 export class SetScheduleDto {
   @ValidateNested() @Type(() => ScheduleDto) schedule: ScheduleDto;
 }
+export class PostDiscussionDto {
+  @IsString() @MaxLength(2000) body: string;
+  @IsOptional() @IsString() @MaxLength(120) scriptureReference?: string;
+}
