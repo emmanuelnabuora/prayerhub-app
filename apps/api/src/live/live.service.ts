@@ -4,6 +4,7 @@ import { PG_POOL } from '../database/database.module';
 import { SfuProvider } from './sfu.provider';
 import { CreateRoomDto, RoomRoleChangeDto } from './dto';
 import { randomUUID } from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Room membership/role state is written to Postgres on every change (source of
 // truth for history/moderation, per docs/02-ARCHITECTURE.md section 3). A real
@@ -16,6 +17,7 @@ export class LiveRoomsService {
   constructor(
     @Inject(PG_POOL) private readonly db: Pool,
     private readonly sfu: SfuProvider,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list() {
@@ -58,6 +60,10 @@ export class LiveRoomsService {
       await this.sfu.createRoom(sfuRoomName);
       await this.upsertParticipant(room.id, hostId, 'host', false);
       await this.logEvent(room.id, hostId, undefined, 'joined', { role: 'host' });
+      const followers = await this.db.query('select follower_id from follows where followee_id = $1', [hostId]);
+      for (const f of followers.rows) {
+        await this.notifications.create(f.follower_id, 'room_live', { roomId: room.id, hostId, title: dto.title });
+      }
     }
 
     return this.serializeRoom({ ...room, host_username: null, host_display_name: null, listener_count: isImmediate ? 1 : 0 });

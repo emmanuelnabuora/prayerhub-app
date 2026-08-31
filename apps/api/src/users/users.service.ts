@@ -2,10 +2,11 @@ import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundExce
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { UpdateProfileDto } from './dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly db: Pool, private readonly notifications: NotificationsService) {}
 
   async findById(id: string, requestingUserId?: string) {
     const result = await this.db.query(
@@ -63,6 +64,7 @@ export class UsersService {
       `insert into follows (follower_id, followee_id) values ($1, $2) on conflict do nothing`,
       [followerId, followeeId],
     );
+    await this.notifications.create(followeeId, 'new_follower', { followerId });
     return { success: true };
   }
 
