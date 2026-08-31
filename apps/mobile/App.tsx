@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -58,10 +59,12 @@ export default function App() {
   useEffect(() => { onLayout(); }, [onLayout]);
   if (!fontsLoaded) return null;
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AppContent />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
