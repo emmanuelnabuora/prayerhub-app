@@ -8,6 +8,7 @@ import {
   Fraunces_400Regular,
 } from '@expo-google-fonts/fraunces';
 import { queryClient } from './src/api/queryClient';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { AUTH_STATUS_KEY, getStoredAccessToken } from './src/api/auth';
 import { useCurrentUser } from './src/api/users';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -57,8 +58,10 @@ export default function App() {
   useEffect(() => { onLayout(); }, [onLayout]);
   if (!fontsLoaded) return null;
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
