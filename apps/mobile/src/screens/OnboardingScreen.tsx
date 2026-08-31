@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateProfile } from '../api/users';
 import { colors, type, space, radius, shadow } from '../theme';
 
@@ -18,6 +19,7 @@ const INTERESTS = [
 export default function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState<'welcome' | 'interests'>('welcome');
   const [selected, setSelected] = useState<string[]>([]);
+  const insets = useSafeAreaInsets();
   const updateProfile = useUpdateProfile();
 
   const toggle = (key: string) => {
@@ -39,7 +41,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.getStartedButton}
+          style={[styles.getStartedButton, { marginBottom: insets.bottom }]}
           onPress={() => setStep('interests')}
           accessibilityRole="button"
           accessibilityLabel="Get started"
@@ -75,7 +77,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
         </View>
       </ScrollView>
       <TouchableOpacity
-        style={styles.continueButton}
+        style={[styles.continueButton, { marginBottom: space.lg + insets.bottom }]}
         onPress={finish}
         disabled={updateProfile.isPending}
         accessibilityRole="button"
