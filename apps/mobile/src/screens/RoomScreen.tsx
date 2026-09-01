@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator }
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoom, useJoinRoomToken, useRaiseHand, useChangeRole, useRemoveParticipant, useEndRoom } from '../api/live';
 import { useLiveSocket } from '../audio/useLiveSocket';
-import { useLiveKitRoom } from '../audio/useLiveKitRoom';
+import { useLiveRoomContext } from '../live/LiveRoomContext';
 import SpeakerTile from '../components/SpeakerTile';
 import FlameMark from '../components/FlameMark';
 import { colors, type, space, radius } from '../theme';
@@ -30,11 +30,23 @@ export default function RoomScreen({ route, navigation }: any) {
     onParticipantRemoved: () => refetch(),
   });
 
-  const { connected, activeSpeakers, setMicEnabled, unsupported } = useLiveKitRoom(tokenData?.sfuUrl, tokenData?.token);
+  const { activeRoom, joinRoom, leaveRoom, setMicEnabled } = useLiveRoomContext();
+  const connected = activeRoom?.roomId === roomId && activeRoom.connected;
+  const activeSpeakers = activeRoom?.roomId === roomId ? activeRoom.activeSpeakers : [];
+  const unsupported = activeRoom?.roomId === roomId && activeRoom.unsupported;
 
   React.useEffect(() => {
     joinToken.mutate(undefined, { onSuccess: setTokenData });
   }, [roomId]);
+
+  // Connects via the app-root LiveRoomProvider rather than owning the
+  // connection here — this is what lets the mini-player keep audio alive
+  // when the user navigates away without explicitly leaving/ending.
+  React.useEffect(() => {
+    if (tokenData?.sfuUrl && tokenData?.token && room) {
+      joinRoom({ roomId, title: room.title, sfuUrl: tokenData.sfuUrl, token: tokenData.token });
+    }
+  }, [tokenData?.sfuUrl, tokenData?.token, room?.title]);
 
   const isModerator = tokenData?.role === 'host' || tokenData?.role === 'co_host';
   const canSpeak = tokenData?.role === 'host' || tokenData?.role === 'co_host' || tokenData?.role === 'speaker';
@@ -113,7 +125,7 @@ export default function RoomScreen({ route, navigation }: any) {
         {tokenData?.role === 'host' ? (
           <TouchableOpacity
             style={styles.endButton}
-            onPress={() => endRoom.mutate(undefined, { onSuccess: () => navigation.goBack() })}
+            onPress={() => endRoom.mutate(undefined, { onSuccess: () => { leaveRoom(); navigation.goBack(); } })}
             accessibilityRole="button"
             accessibilityLabel="End the prayer room for everyone"
           >
@@ -122,7 +134,7 @@ export default function RoomScreen({ route, navigation }: any) {
         ) : (
           <TouchableOpacity
             style={styles.leaveButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => { leaveRoom(); navigation.goBack(); }}
             accessibilityRole="button"
             accessibilityLabel="Leave the room quietly"
           >

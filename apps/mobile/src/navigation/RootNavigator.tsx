@@ -21,6 +21,7 @@ import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import MiniPlayer from '../components/MiniPlayer';
 import { theme, colors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -137,6 +138,7 @@ export default function RootNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={color} size={size} /> }}
         />
       </Tab.Navigator>
+      <MiniPlayer />
     </NavigationContainer>
   );
 }

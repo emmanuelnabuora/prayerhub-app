@@ -15,6 +15,7 @@ import { useCurrentUser } from './src/api/users';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/LoginScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import { LiveRoomProvider } from './src/live/LiveRoomContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +39,13 @@ function AuthenticatedContent() {
   const { data: user, isLoading } = useCurrentUser();
   if (isLoading) return null;
   const hasCompletedOnboarding = (user?.interests?.length ?? 0) > 0;
-  return hasCompletedOnboarding ? <RootNavigator /> : <OnboardingScreen onComplete={() => {}} />;
+  return hasCompletedOnboarding ? (
+    <LiveRoomProvider>
+      <RootNavigator />
+    </LiveRoomProvider>
+  ) : (
+    <OnboardingScreen onComplete={() => {}} />
+  );
 }
 
 function AppContent() {
