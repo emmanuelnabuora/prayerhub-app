@@ -16,12 +16,24 @@ export class UsersService {
               coalesce(
                 (select array_agg(ui.interest) from user_interests ui where ui.user_id = u.id),
                 array[]::text[]
-              ) as interests
+              ) as interests,
+              (select count(*) from prayer_interactions pi where pi.user_id = u.id and pi.type = 'prayed') as "prayerCount",
+              (select count(*) from group_members gm where gm.user_id = u.id) as "groupCount",
+              (select count(*) from group_members gm join groups g on g.id = gm.group_id
+                 where gm.user_id = u.id and g.group_type = 'bible_study') as "studyCount",
+              (select count(*) from follows f where f.follower_id = u.id) as "followingCount"
        from users u where u.id = $1 and u.deleted_at is null`,
       [id],
     );
     if (!result.rowCount) throw new NotFoundException('User not found');
-    return result.rows[0];
+    const row = result.rows[0];
+    return {
+      ...row,
+      prayerCount: Number(row.prayerCount),
+      groupCount: Number(row.groupCount),
+      studyCount: Number(row.studyCount),
+      followingCount: Number(row.followingCount),
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
