@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateProfile } from '../api/users';
@@ -27,7 +27,15 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   };
 
   const finish = () => {
-    updateProfile.mutate({ interests: selected }, { onSuccess: onComplete });
+    updateProfile.mutate(
+      { interests: selected },
+      {
+        onSuccess: onComplete,
+        onError: (err: any) => {
+          Alert.alert('Could not save', err?.response?.data?.message ?? err?.message ?? 'Unknown error');
+        },
+      },
+    );
   };
 
   if (step === 'welcome') {
