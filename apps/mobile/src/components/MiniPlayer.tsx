@@ -1,8 +1,16 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiveRoomContext } from '../live/LiveRoomContext';
 import { colors, type, space, radius, shadow } from '../theme';
+
+// React Navigation's bottom tab bar sits at roughly this height on Android
+// before safe-area insets — MiniPlayer is a sibling of Tab.Navigator, not a
+// descendant, so useBottomTabBarHeight() (which needs the Tab.Navigator's own
+// context) isn't reachable here. This fixed estimate + insets.bottom is the
+// simple, reliable alternative.
+const TAB_BAR_HEIGHT = 56;
 
 // Renders a persistent audio bar above the bottom tab bar whenever a live
 // room connection is active AND the user isn't currently looking at that
@@ -11,6 +19,7 @@ import { colors, type, space, radius, shadow } from '../theme';
 export default function MiniPlayer() {
   const { activeRoom, setMicEnabled, leaveRoom } = useLiveRoomContext();
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const currentRouteName = useNavigationState((state) => {
     if (!state) return undefined;
@@ -25,7 +34,7 @@ export default function MiniPlayer() {
   if (!activeRoom || currentRouteName === 'Room') return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { bottom: TAB_BAR_HEIGHT + insets.bottom + space.sm }]}>
       <View style={styles.liveDot} accessibilityElementsHidden importantForAccessibility="no" />
       <View style={{ flex: 1 }}>
         <Text style={styles.title} numberOfLines={1}>{activeRoom.title}</Text>
@@ -61,7 +70,7 @@ export default function MiniPlayer() {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute', bottom: 60, left: space.md, right: space.md,
+    position: 'absolute', left: space.md, right: space.md,
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.indigoDeep,
     borderRadius: radius.lg, padding: space.sm, gap: space.sm, ...shadow.card,
   },
