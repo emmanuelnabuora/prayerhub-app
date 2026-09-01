@@ -113,13 +113,14 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private' | 'invite_only'>('public');
+  const [groupType, setGroupType] = useState<'prayer' | 'cell' | 'bible_study'>('prayer');
   const createGroup = useCreateGroup();
 
   const submit = () => {
     if (!name.trim()) return;
     Keyboard.dismiss();
     createGroup.mutate(
-      { name, description, visibility },
+      { name, description, visibility, groupType },
       { onSuccess: (group) => { setName(''); setDescription(''); onClose(); onCreated(group.id); } },
     );
   };
@@ -131,6 +132,19 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
           <Text style={styles.modalTitle}>Start a Group</Text>
           <TextInput style={styles.input} placeholder="Group name" value={name} onChangeText={setName} accessibilityLabel="Group name" />
           <TextInput style={[styles.input, styles.textArea]} placeholder="Description" value={description} onChangeText={setDescription} multiline accessibilityLabel="Group description" />
+          <View style={styles.visibilityRow}>
+            {(["prayer", "cell", "bible_study"] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.visibilityChip, groupType === t && styles.visibilityChipActive]}
+                onPress={() => setGroupType(t)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: groupType === t }}
+              >
+                <Text style={groupType === t ? styles.visibilityTextActive : styles.visibilityText}>{t.replace("_", " ")}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <View style={styles.visibilityRow}>
             {(['public', 'private', 'invite_only'] as const).map((v) => (
               <TouchableOpacity
