@@ -23,6 +23,24 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Text style={styles.displayName}>{user?.displayName}</Text>
               <Text style={styles.username}>@{user?.username}</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{user?.prayerCount ?? 0}</Text>
+                  <Text style={styles.statLabel}>Prayers</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{user?.groupCount ?? 0}</Text>
+                  <Text style={styles.statLabel}>Groups</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{user?.studyCount ?? 0}</Text>
+                  <Text style={styles.statLabel}>Studies</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{user?.followingCount ?? 0}</Text>
+                  <Text style={styles.statLabel}>Following</Text>
+                </View>
+              </View>
             </View>
           )}
         </FadeInView>
@@ -75,6 +93,10 @@ const styles = StyleSheet.create({
   avatarInitial: { fontFamily: type.fontFamily.display, fontSize: type.size.xxl, color: colors.indigoDeep },
   displayName: { fontFamily: type.fontFamily.display, fontSize: type.size.xl, color: colors.textOnDark, textAlign: 'center' },
   username: { color: colors.mutedTextOnDark, fontSize: type.size.sm, marginTop: 2, textAlign: 'center' },
+  statsRow: { flexDirection: 'row', marginTop: space.lg, gap: space.lg },
+  statItem: { alignItems: 'center' },
+  statValue: { fontFamily: type.fontFamily.display, fontSize: type.size.lg, color: colors.textOnDark, fontWeight: '700' },
+  statLabel: { color: colors.mutedTextOnDark, fontSize: 11, marginTop: 2 },
   content: { padding: space.lg },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: space.lg, marginBottom: space.md, borderWidth: 1, borderColor: colors.cardBorder, ...shadow.card },
   cardLabel: { fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: space.sm, fontWeight: '600' },
