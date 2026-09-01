@@ -1,88 +1,145 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
-import { useOrganization, useOrganizationAnnouncements, useFollowOrganization, usePostAnnouncement } from '../api/organizations';
+import { useOrganization, useOrganizationAnnouncements, useOrganizationPrayers, useFollowOrganization, usePostAnnouncement } from '../api/organizations';
 import { colors, type, space, radius } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
+const COMMUNITY_TABS = ['About', 'Feed', 'Prayer', 'Studies', 'Members'] as const;
+type CommunityTab = (typeof COMMUNITY_TABS)[number];
+
 export default function OrganizationDetailScreen({ route, navigation }: any) {
   const { orgId } = route.params;
+  const insets = useSafeAreaInsets();
   const { data: org, isLoading } = useOrganization(orgId);
   const { data: announcements } = useOrganizationAnnouncements(orgId);
+  const { data: orgPrayers } = useOrganizationPrayers(orgId);
   const followOrg = useFollowOrganization(orgId);
   const postAnnouncement = usePostAnnouncement(orgId);
   const [announceModalVisible, setAnnounceModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<CommunityTab>('About');
 
   if (isLoading || !org) return <View style={styles.loadingRoot}><FlameMark size={40} /></View>;
 
   const isLeader = org.viewerRole === 'leader';
+  const bibleStudyGroups = (org.groups ?? []).filter((g: any) => g.group_type === 'bible_study');
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ListHeaderComponent={
-          <FadeInView>
-            <View style={styles.header}>
-              <View style={styles.topRow}>
-                <Text style={styles.orgType}>{org.type}</Text>
-                {org.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
-              </View>
-              <Text style={styles.orgName} maxFontSizeMultiplier={1.3}>{org.name}</Text>
-              {!!org.description && <Text style={styles.orgDescription}>{org.description}</Text>}
-              <Text style={styles.orgMeta}>{org.followerCount} followers · {org.groupCount} groups</Text>
-
-              <View style={styles.buttonRow}>
-                {!org.isFollowing && (
-                  <TouchableOpacity style={styles.followButton} onPress={() => followOrg.mutate()} accessibilityRole="button" accessibilityLabel={`Follow ${org.name}`}>
-                    <Text style={styles.followButtonText}>Follow</Text>
-                  </TouchableOpacity>
-                )}
-                {isLeader && (
-                  <TouchableOpacity style={styles.announceButton} onPress={() => setAnnounceModalVisible(true)} accessibilityRole="button" accessibilityLabel="Post an announcement">
-                    <Text style={styles.announceButtonText}>+ Announcement</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {org.groups?.length > 0 && (
-                <>
-                  <Text style={styles.sectionTitle}>Groups</Text>
-                  {org.groups.map((g: any) => (
-                    <TouchableOpacity
-                      key={g.id}
-                      style={styles.groupRow}
-                      onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Open group: ${g.name}`}
-                    >
-                      <Text style={styles.groupName}>{g.name}</Text>
-                      <Text style={styles.groupType}>{g.group_type}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </>
-              )}
-
-              <Text style={styles.sectionTitle}>Announcements</Text>
-            </View>
-          </FadeInView>
-        }
-        data={announcements}
-        keyExtractor={(item: any) => item.id}
-        contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: space.xl }}
-        renderItem={({ item }: any) => (
-          <View style={styles.announcementCard}>
-            <Text style={styles.announcementTitle}>{item.title}</Text>
-            <Text style={styles.announcementBody}>{item.body}</Text>
-            <Text style={styles.announcementMeta}>{item.author_name}</Text>
+      <FadeInView>
+        <View style={styles.header}>
+          <View style={styles.topRow}>
+            <Text style={styles.orgType}>{org.type}</Text>
+            {org.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
           </View>
-        )}
-        ListEmptyComponent={<Text style={styles.empty}>No announcements yet.</Text>}
-      />
+          <Text style={styles.orgName} maxFontSizeMultiplier={1.3}>{org.name}</Text>
+          <Text style={styles.orgMeta}>{org.followerCount} followers · {org.groupCount} groups</Text>
+          <View style={styles.buttonRow}>
+            {!org.isFollowing && (
+              <TouchableOpacity style={styles.followButton} onPress={() => followOrg.mutate()} accessibilityRole="button" accessibilityLabel={`Follow ${org.name}`}>
+                <Text style={styles.followButtonText}>Follow</Text>
+              </TouchableOpacity>
+            )}
+            {isLeader && (
+              <TouchableOpacity style={styles.announceButton} onPress={() => setAnnounceModalVisible(true)} accessibilityRole="button" accessibilityLabel="Post an announcement">
+                <Text style={styles.announceButtonText}>+ Announcement</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </FadeInView>
+
+      <View style={styles.tabRow}>
+        {COMMUNITY_TABS.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+            onPress={() => setActiveTab(tab)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === tab }}
+          >
+            <Text style={activeTab === tab ? styles.tabTextActive : styles.tabText}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {activeTab === 'About' && (
+        <View style={{ padding: space.lg }}>
+          {!!org.description && <Text style={styles.orgDescription}>{org.description}</Text>}
+        </View>
+      )}
+
+      {activeTab === 'Feed' && (
+        <FlatList
+          data={announcements}
+          keyExtractor={(item: any) => item.id}
+          contentContainerStyle={{ padding: space.lg }}
+          renderItem={({ item }: any) => (
+            <View style={styles.announcementCard}>
+              <Text style={styles.announcementTitle}>{item.title}</Text>
+              <Text style={styles.announcementBody}>{item.body}</Text>
+              <Text style={styles.announcementMeta}>{item.author_name}</Text>
+            </View>
+          )}
+          ListEmptyComponent={<Text style={styles.empty}>No announcements yet.</Text>}
+        />
+      )}
+
+      {activeTab === 'Prayer' && (
+        <FlatList
+          data={orgPrayers}
+          keyExtractor={(item: any) => item.id}
+          contentContainerStyle={{ padding: space.lg }}
+          renderItem={({ item }: any) => (
+            <View style={styles.announcementCard}>
+              <Text style={styles.announcementTitle}>{item.title}</Text>
+              <Text style={styles.announcementBody}>{item.description}</Text>
+              <Text style={styles.announcementMeta}>{item.authorName} · {item.prayedCount} prayed</Text>
+            </View>
+          )}
+          ListEmptyComponent={<Text style={styles.empty}>No prayer requests from this community yet.</Text>}
+        />
+      )}
+
+      {activeTab === 'Studies' && (
+        <FlatList
+          data={bibleStudyGroups}
+          keyExtractor={(g: any) => g.id}
+          contentContainerStyle={{ padding: space.lg }}
+          renderItem={({ item: g }: any) => (
+            <TouchableOpacity
+              style={styles.groupRow}
+              onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}
+              accessibilityRole="button"
+              accessibilityLabel={`Open Bible study: ${g.name}`}
+            >
+              <Text style={styles.groupName}>{g.name}</Text>
+              <Text style={styles.groupType}>bible study</Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={<Text style={styles.empty}>No Bible studies linked to this community yet.</Text>}
+        />
+      )}
+
+      {activeTab === 'Members' && (
+        <FlatList
+          data={org.leadership}
+          keyExtractor={(m: any) => m.id}
+          contentContainerStyle={{ padding: space.lg }}
+          renderItem={({ item }: any) => (
+            <View style={styles.groupRow}>
+              <Text style={styles.groupName}>{item.display_name}</Text>
+              <Text style={styles.groupType}>{item.role}</Text>
+            </View>
+          )}
+          ListEmptyComponent={<Text style={styles.empty}>No members listed yet.</Text>}
+        />
+      )}
 
       <Modal visible={announceModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <AnnouncementForm onSubmit={(a) => { postAnnouncement.mutate(a); setAnnounceModalVisible(false); }} onClose={() => setAnnounceModalVisible(false)} />
+          <AnnouncementForm onSubmit={(a: any) => { postAnnouncement.mutate(a); setAnnounceModalVisible(false); }} onClose={() => setAnnounceModalVisible(false)} />
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -114,14 +171,18 @@ const styles = StyleSheet.create({
   orgType: { color: colors.mutedText, fontSize: type.size.xs, textTransform: 'uppercase' },
   verifiedBadge: { color: colors.success, fontSize: type.size.xs, fontWeight: '700' },
   orgName: { fontFamily: type.fontFamily.display, fontSize: type.size.xl, color: colors.indigo, marginVertical: 4 },
-  orgDescription: { color: colors.text, marginBottom: space.sm },
+  orgDescription: { color: colors.text, marginBottom: space.sm, lineHeight: type.size.base * type.lineHeight.normal },
   orgMeta: { color: colors.mutedText, fontSize: type.size.sm, marginBottom: space.md },
-  buttonRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.lg },
+  buttonRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   followButton: { backgroundColor: colors.indigo, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm },
   followButtonText: { color: '#fff', fontWeight: '700' },
   announceButton: { backgroundColor: colors.flame, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm },
   announceButtonText: { color: '#fff', fontWeight: '700' },
-  sectionTitle: { fontFamily: type.fontFamily.display, fontSize: type.size.base, color: colors.indigo, marginTop: space.md, marginBottom: space.sm },
+  tabRow: { flexDirection: 'row', paddingHorizontal: space.lg, gap: space.xs, marginBottom: space.sm },
+  tabButton: { flex: 1, paddingVertical: space.sm, borderRadius: radius.pill, alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },
+  tabButtonActive: { backgroundColor: colors.indigo, borderColor: colors.indigo },
+  tabText: { color: colors.text, fontSize: 11, fontWeight: '600' },
+  tabTextActive: { color: '#fff', fontSize: 11, fontWeight: '700' },
   groupRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.card, borderRadius: radius.sm, padding: space.md, marginBottom: 6, borderWidth: 1, borderColor: colors.cardBorder },
   groupName: { color: colors.text },
   groupType: { color: colors.mutedText, fontSize: type.size.xs, textTransform: 'uppercase' },

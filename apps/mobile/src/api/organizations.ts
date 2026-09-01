@@ -49,3 +49,11 @@ export function usePostAnnouncement(id: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['organizations', id, 'announcements'] }),
   });
 }
+
+export function useOrganizationPrayers(id: string | undefined) {
+  return useQuery({
+    queryKey: ['organizations', id, 'prayers'],
+    queryFn: async () => (await api.get(`/organizations/${id}/prayers`)).data,
+    enabled: !!id,
+  });
+}
