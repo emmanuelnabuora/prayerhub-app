@@ -64,6 +64,11 @@ export class OrganizationsController {
     return this.organizationsService.postAnnouncement(id, req.user.userId, dto);
   }
 
+  @Get(':id/prayers')
+  listPrayers(@Param('id') id: string) {
+    return this.organizationsService.listPrayers(id);
+  }
+
   @Post(':id/groups')
   linkGroup(@Param('id') id: string, @Req() req: any, @Body() dto: LinkGroupDto) {
     return this.organizationsService.linkGroup(id, req.user.userId, dto.groupId);
