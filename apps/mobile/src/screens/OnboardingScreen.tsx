@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateProfile } from '../api/users';
+import { useLogout } from '../api/auth';
 import { colors, type, space, radius, shadow } from '../theme';
 
 const INTERESTS = [
@@ -21,6 +22,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const [selected, setSelected] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
   const updateProfile = useUpdateProfile();
+  const logout = useLogout();
 
   const toggle = (key: string) => {
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -32,7 +34,11 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
       {
         onSuccess: onComplete,
         onError: (err: any) => {
-          Alert.alert('Could not save', err?.response?.data?.message ?? err?.message ?? 'Unknown error');
+          const message = err?.response?.data?.message ?? err?.message ?? 'Unknown error';
+          Alert.alert('Could not save', message, [
+            { text: 'OK' },
+            { text: 'Log out and try again', onPress: () => logout.mutate(), style: 'destructive' },
+          ]);
         },
       },
     );
