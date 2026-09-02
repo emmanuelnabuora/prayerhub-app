@@ -38,8 +38,8 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.greeting} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting(currentUser?.displayName)}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <Text style={[styles.greeting, { flex: 1, marginRight: 12 }]} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting(currentUser?.displayName)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flexShrink: 0 }}>
             <TouchableOpacity
               onPress={() => navigation.navigate('Notifications')}
               accessibilityRole="button"
