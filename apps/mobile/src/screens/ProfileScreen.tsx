@@ -73,6 +73,16 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={styles.row}
+          onPress={() => navigation.navigate('Settings')}
+          accessibilityRole="button"
+          accessibilityLabel="Settings and Privacy"
+        >
+          <Text style={styles.rowIcon}>⚙️</Text>
+          <Text style={styles.rowText}>Settings & Privacy</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.row, styles.logoutRow]}
           onPress={() => logout.mutate()}
           accessibilityRole="button"

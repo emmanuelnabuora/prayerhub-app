@@ -19,3 +19,24 @@ export function useUpdateProfile() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'me'] }),
   });
 }
+
+export function useBlockedUsers() {
+  return useQuery({
+    queryKey: ['users', 'blocked'],
+    queryFn: async () => (await api.get('/users/blocked')).data,
+  });
+}
+
+export function useUnblockUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => (await api.delete(`/users/${userId}/block`)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'blocked'] }),
+  });
+}
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: async () => (await api.delete('/users/me')).data,
+  });
+}

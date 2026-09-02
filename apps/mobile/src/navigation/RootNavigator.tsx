@@ -21,6 +21,7 @@ import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import AssistantScreen from '../screens/AssistantScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import MiniPlayer from '../components/MiniPlayer';
 import { theme, colors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +40,7 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="Journal" component={JournalScreen} />
       <ProfileStack.Screen name="Conversations" component={ConversationsScreen} />
       <ProfileStack.Screen name="Chat" component={ChatScreen} />
+      <ProfileStack.Screen name="Settings" component={SettingsScreen} />
     </ProfileStack.Navigator>
   );
 }
