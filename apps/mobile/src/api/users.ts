@@ -40,3 +40,9 @@ export function useDeleteAccount() {
     mutationFn: async () => (await api.delete('/users/me')).data,
   });
 }
+
+export function useBlockUser() {
+  return useMutation({
+    mutationFn: async (userId: string) => (await api.post(`/users/${userId}/block`)).data,
+  });
+}
