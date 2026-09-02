@@ -12,6 +12,14 @@ function describeNotification(n: { type: string; payload: any }): string {
   switch (n.type) {
     case 'prayer_received':
       return 'Someone prayed for your request 🙏';
+    case 'new_follower':
+      return 'You have a new follower';
+    case 'room_live':
+      return `${n.payload?.title ?? 'A room you follow'} just went live 🔴`;
+    case 'group_join_approved':
+      return `You were approved to join ${n.payload?.groupName ?? 'a group'}`;
+    case 'testimony_encouragement':
+      return n.payload?.type === 'amen' ? 'Someone said Amen to your testimony 🙌' : 'Someone encouraged your testimony 💛';
     default:
       return 'You have a new notification';
   }

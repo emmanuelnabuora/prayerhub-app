@@ -2,6 +2,7 @@ import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundExce
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { CreateGroupDto, UpdateGroupDto, ChangeMemberRoleDto, SetScheduleDto, PostDiscussionDto } from './dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Visibility rules for discovery, mirroring the same defense-in-depth pattern used
 // for prayer_requests: private/invite_only groups are only ever returned if the
@@ -13,7 +14,7 @@ const DISCOVERY_CLAUSE = `
 
 @Injectable()
 export class GroupsService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly db: Pool, private readonly notifications: NotificationsService) {}
 
   async create(userId: string, dto: CreateGroupDto) {
     const result = await this.db.query(
@@ -181,6 +182,11 @@ export class GroupsService {
          on conflict do nothing`,
         [row.group_id, row.invited_user_id],
       );
+      const group = await this.db.query('select name from groups where id = $1', [row.group_id]);
+      await this.notifications.create(row.invited_user_id, 'group_join_approved', {
+        groupId: row.group_id,
+        groupName: group.rows[0]?.name,
+      });
     }
     return { success: true };
   }

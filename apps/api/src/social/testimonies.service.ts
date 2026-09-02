@@ -2,10 +2,11 @@ import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nest
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { CreateTestimonyDto } from './dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TestimoniesService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly db: Pool, private readonly notifications: NotificationsService) {}
 
   // Testimonies are public by design once shared — there's no visibility field in
   // the schema (unlike prayer requests), matching the product intent that a
@@ -35,13 +36,17 @@ export class TestimoniesService {
   }
 
   async react(id: string, userId: string, type: 'amen' | 'encourage') {
-    const exists = await this.db.query('select 1 from testimonies where id = $1 and deleted_at is null', [id]);
-    if (!exists.rowCount) throw new NotFoundException('Testimony not found');
+    const testimony = await this.db.query('select user_id from testimonies where id = $1 and deleted_at is null', [id]);
+    if (!testimony.rowCount) throw new NotFoundException('Testimony not found');
     await this.db.query(
       `insert into testimony_reactions (testimony_id, user_id, type) values ($1, $2, $3)
        on conflict (testimony_id, user_id, type) do nothing`,
       [id, userId, type],
     );
+    const ownerId = testimony.rows[0].user_id;
+    if (ownerId !== userId) {
+      await this.notifications.create(ownerId, 'testimony_encouragement', { testimonyId: id, type, fromUserId: userId });
+    }
     return { success: true };
   }
 
