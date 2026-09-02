@@ -96,6 +96,22 @@ export class UsersService {
     return { success: true };
   }
 
+  async unblock(blockerId: string, blockedId: string) {
+    await this.db.query('delete from blocks where blocker_id = $1 and blocked_id = $2', [blockerId, blockedId]);
+    return { success: true };
+  }
+
+  async listBlocked(userId: string) {
+    const result = await this.db.query(
+      `select u.id, u.username, u.display_name as "displayName", u.avatar_url as "avatarUrl"
+       from blocks b join users u on u.id = b.blocked_id
+       where b.blocker_id = $1
+       order by b.created_at desc`,
+      [userId],
+    );
+    return result.rows;
+  }
+
   async listFollowers(userId: string) {
     const result = await this.db.query(
       `select u.id, u.username, u.display_name, u.avatar_url from follows f
@@ -122,5 +138,13 @@ export class UsersService {
       [`%${query}%`],
     );
     return result.rows;
+  }
+
+  // Soft-delete, matching the deleted_at pattern used everywhere else in this
+  // schema — never hard-deletes a row, so moderation/audit history referencing
+  // this user (reports, past messages, etc.) stays intact.
+  async deleteAccount(userId: string) {
+    await this.db.query('update users set deleted_at = now() where id = $1', [userId]);
+    return { success: true };
   }
 }
