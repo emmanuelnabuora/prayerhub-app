@@ -90,24 +90,29 @@ export default function HomeScreen() {
 
         {liveNow.length > 0 && (
           <FadeInView delay={80}>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Live Now</Text>
+            <Text style={styles.sectionLabel}>Live Now</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.liveScrollContent}
+            >
               {liveNow.map((room: any) => (
                 <TouchableOpacity
                   key={room.id}
-                  style={styles.rowItem}
+                  style={styles.liveCard}
                   onPress={() => navigation.getParent()?.navigate('Live', { screen: 'Room', params: { roomId: room.id } })}
                   accessibilityRole="button"
                   accessibilityLabel={`Join live room: ${room.title}, ${room.listenerCount} listening`}
                 >
-                  <View style={styles.liveDot} accessibilityElementsHidden importantForAccessibility="no" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{room.title}</Text>
-                    <Text style={styles.rowMeta}>{room.listenerCount} listening</Text>
+                  <View style={styles.liveCardBadge}>
+                    <View style={styles.liveDot} accessibilityElementsHidden importantForAccessibility="no" />
+                    <Text style={styles.liveCardBadgeText}>LIVE</Text>
                   </View>
+                  <Text style={styles.liveCardTitle} numberOfLines={1}>{room.title}</Text>
+                  <Text style={styles.liveCardMeta}>{room.listenerCount} listening</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </FadeInView>
         )}
 
@@ -181,6 +186,19 @@ const styles = StyleSheet.create({
     fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase',
     letterSpacing: 0.6, marginBottom: space.sm, fontWeight: '600',
   },
+  sectionLabel: {
+    fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase',
+    letterSpacing: 0.6, marginBottom: space.sm, fontWeight: '600', marginHorizontal: space.lg,
+  },
+  liveScrollContent: { paddingHorizontal: space.lg, gap: space.sm, paddingBottom: space.md },
+  liveCard: {
+    backgroundColor: colors.card, borderRadius: radius.md, padding: space.md, minWidth: 150,
+    borderWidth: 1, borderColor: colors.cardBorder, ...shadow.card,
+  },
+  liveCardBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: space.sm },
+  liveCardBadgeText: { color: colors.live, fontSize: 10, fontWeight: '700' },
+  liveCardTitle: { color: colors.text, fontWeight: '600', fontSize: type.size.sm, marginBottom: 2 },
+  liveCardMeta: { color: colors.mutedText, fontSize: 11 },
   verseLoading: { paddingVertical: space.md, alignItems: 'flex-start' },
   verseText: {
     fontFamily: type.fontFamily.displayItalic, fontSize: type.size.md,
