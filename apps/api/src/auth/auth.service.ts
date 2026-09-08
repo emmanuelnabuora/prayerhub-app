@@ -5,12 +5,15 @@ import * as crypto from 'crypto';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { RegisterDto, LoginDto } from './dto';
+import { OAuth2Client } from 'google-auth-library';
 
 // Auth against the `users` / `sessions` tables defined in migrations/0001_init.sql.
 // Access tokens are short-lived JWTs; refresh tokens are opaque, stored hashed, and
 // rotated on every use (see /auth/refresh) so a leaked refresh token has a single use.
 @Injectable()
 export class AuthService {
+  private readonly googleClient = new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID);
+
   constructor(
     @Inject(PG_POOL) private readonly db: Pool,
     private readonly jwt: JwtService,
@@ -51,6 +54,58 @@ export class AuthService {
     return this.issueTokens(user.id, user.username, user.email);
   }
 
+
+  // Verifies the ID token Google's SDK gave the mobile app, rather than trusting
+  // whatever the client claims — the token's signature and audience (our own
+  // Client ID) are checked against Google's public keys before we touch the DB.
+  async googleSignIn(idToken: string) {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.sub || !payload.email) throw new UnauthorizedException('Invalid Google token');
+
+    const existingIdentity = await this.db.query(
+      `select u.id, u.username, u.email from oauth_identities oi
+       join users u on u.id = oi.user_id
+       where oi.provider = 'google' and oi.provider_user_id = $1`,
+      [payload.sub],
+    );
+    if (existingIdentity.rowCount) {
+      const user = existingIdentity.rows[0];
+      return this.issueTokens(user.id, user.username, user.email);
+    }
+
+    const existingUser = await this.db.query(
+      'select id, username, email from users where email = $1 and deleted_at is null',
+      [payload.email],
+    );
+    let user;
+    if (existingUser.rowCount) {
+      user = existingUser.rows[0];
+    } else {
+      const baseUsername = payload.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
+      const uniqueUsername = `${baseUsername}${Math.floor(Math.random() * 10000)}`;
+      const created = await this.db.query(
+        `insert into users (email, username, display_name)
+         values ($1, $2, $3) returning id, username, email`,
+        [payload.email, uniqueUsername, payload.name ?? baseUsername],
+      );
+      user = created.rows[0];
+      await this.db.query(
+        `insert into user_roles (user_id, role_id, scope_type)
+         select $1, id, 'platform' from roles where key = 'member'`,
+        [user.id],
+      );
+    }
+
+    await this.db.query(
+      `insert into oauth_identities (user_id, provider, provider_user_id) values ($1, 'google', $2)`,
+      [user.id, payload.sub],
+    );
+    return this.issueTokens(user.id, user.username, user.email);
+  }
   async refresh(refreshToken: string) {
     const tokenHash = this.hashToken(refreshToken);
     const result = await this.db.query(
