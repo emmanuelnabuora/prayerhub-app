@@ -44,5 +44,5 @@ export const TERMS_OF_SERVICE_HTML = `<!DOCTYPE html>
 <p>We may update these Terms from time to time. Continued use of the App after changes take effect constitutes acceptance of the updated Terms.</p>
 
 <h2>Contact Us</h2>
-<p>Questions about these Terms can be sent to: <strong>[INSERT CONTACT EMAIL]</strong></p>
+<p>Questions about these Terms can be sent to: <strong>contact@prayerhub.io</strong></p>
 </body></html>`;

@@ -44,5 +44,5 @@ export const PRIVACY_POLICY_HTML = `<!DOCTYPE html>
 <p>We retain your information for as long as your account is active. When you delete your account, your profile and public content are removed from view; some information may be retained where necessary for legal, safety, or moderation purposes.</p>
 
 <h2>Contact Us</h2>
-<p>Questions about this policy can be sent to: <strong>[INSERT CONTACT EMAIL]</strong></p>
+<p>Questions about this policy can be sent to: <strong>contact@prayerhub.io</strong></p>
 </body></html>`;
