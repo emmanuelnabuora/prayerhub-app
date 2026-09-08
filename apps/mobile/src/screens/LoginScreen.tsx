@@ -4,8 +4,19 @@ import {
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLogin, useRegister } from '../api/auth';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { useLogin, useRegister, useGoogleSignIn } from '../api/auth';
 import { colors, type, space, radius, shadow } from '../theme';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// Only a "Web application" OAuth Client ID exists for this project so far —
+// using it for all platforms works fine with expo-auth-session's browser-based
+// flow (no native SHA-1/keystore registration needed, unlike the native
+// Google Sign-In SDK). Revisit with platform-specific client IDs later if a
+// more native-feeling sign-in experience is wanted.
+const GOOGLE_WEB_CLIENT_ID = '216827842410-kgmknjjh20l6rkg12bpgg0j2dg1d43d5.apps.googleusercontent.com';
 
 // Single screen toggling between Login and Register — matches the onboarding
 // principle of getting someone into the app fast rather than a multi-step wizard.
@@ -18,8 +29,19 @@ export default function LoginScreen() {
 
   const login = useLogin();
   const register = useRegister();
-  const pending = login.isPending || register.isPending;
-  const error = login.error || register.error;
+  const googleSignIn = useGoogleSignIn();
+  const pending = login.isPending || register.isPending || googleSignIn.isPending;
+  const error = login.error || register.error || googleSignIn.error;
+
+  const [googleRequest, googleResponse, promptGoogleSignIn] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+  });
+
+  React.useEffect(() => {
+    if (googleResponse?.type === 'success' && googleResponse.params.id_token) {
+      googleSignIn.mutate(googleResponse.params.id_token);
+    }
+  }, [googleResponse]);
 
   const submit = () => {
     if (mode === 'login') {
@@ -118,6 +140,22 @@ export default function LoginScreen() {
             <Text style={styles.submitButtonText}>{mode === 'login' ? 'Log In' : 'Create Account'}</Text>
           )}
         </TouchableOpacity>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={() => promptGoogleSignIn()}
+          disabled={!googleRequest || pending}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Google"
+        >
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -151,4 +189,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginTop: space.sm, ...shadow.flameGlow,
   },
   submitButtonText: { color: colors.indigoDeep, fontWeight: '700', fontSize: type.size.base },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: space.lg },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.cardBorder },
+  dividerText: { color: colors.mutedText, marginHorizontal: space.sm, fontSize: type.size.sm },
+  googleButton: {
+    backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.cardBorder,
+    paddingVertical: space.md, alignItems: 'center',
+  },
+  googleButtonText: { color: colors.text, fontWeight: '600', fontSize: type.size.base },
 });

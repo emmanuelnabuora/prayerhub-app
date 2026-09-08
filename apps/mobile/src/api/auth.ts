@@ -54,3 +54,14 @@ export function useLogout() {
     },
   });
 }
+
+export function useGoogleSignIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (idToken: string) => (await api.post('/auth/google', { idToken })).data,
+    onSuccess: async (data) => {
+      await persistTokens(data);
+      queryClient.setQueryData(AUTH_STATUS_KEY, true);
+    },
+  });
+}
