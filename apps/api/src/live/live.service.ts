@@ -183,6 +183,42 @@ export class LiveRoomsService {
     return { success: true };
   }
 
+  // Called from LiveGateway's handleDisconnect — a socket dropping (crash, network
+  // loss, force-close) previously left both room_participants and live_rooms
+  // completely unchanged: the person stayed listed as present forever, and if they
+  // were the host, the room stayed status='live' with no way to close it short of
+  // the host manually reconnecting and tapping End Room. This makes disconnect do
+  // what leaving on purpose already does.
+  async handleParticipantDisconnect(roomId: string, userId: string) {
+    const participant = await this.db.query(
+      'select role from room_participants where room_id = $1 and user_id = $2 and left_at is null',
+      [roomId, userId],
+    );
+    if (!participant.rowCount) return;
+    await this.db.query(
+      'update room_participants set left_at = now() where room_id = $1 and user_id = $2',
+      [roomId, userId],
+    );
+    if (participant.rows[0].role === 'host') {
+      const room = await this.db.query(
+        "select sfu_room_name from live_rooms where id = $1 and status = 'live'",
+        [roomId],
+      );
+      if (room.rowCount) {
+        await this.db.query(
+          `update live_rooms set status = 'ended', ended_at = now(), updated_at = now() where id = $1`,
+          [roomId],
+        );
+        await this.db.query(
+          `update room_participants set left_at = now() where room_id = $1 and left_at is null`,
+          [roomId],
+        );
+        await this.sfu.endRoom(room.rows[0].sfu_room_name);
+        await this.logEvent(roomId, userId, undefined, 'host_disconnected_room_ended', {});
+      }
+    }
+  }
+
   private async upsertParticipant(roomId: string, userId: string, role: string, muted: boolean) {
     await this.db.query(
       `insert into room_participants (room_id, user_id, role, muted)
