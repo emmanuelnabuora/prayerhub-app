@@ -50,5 +50,13 @@
   "allowScripts": {
     "argon2@0.41.1": true,
     "@nestjs/core@10.4.22": true
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "rootDir": ".",
+    "testMatch": [
+      "<rootDir>/test/**/*.spec.ts"
+    ]
   }
 }

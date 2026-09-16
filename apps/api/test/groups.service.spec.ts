@@ -11,7 +11,7 @@ describe('GroupsService authorization', () => {
         return { rows: [{}], rowCount: 1 };
       }),
     };
-    return new GroupsService(db as any);
+    return new GroupsService(db as any, { create: jest.fn() } as any);
   }
 
   it('blocks a plain member from changing another member\'s role', async () => {

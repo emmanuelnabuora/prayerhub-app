@@ -12,7 +12,7 @@ describe('LiveRoomsService authorization', () => {
       }),
     };
     const sfu = { muteParticipant: jest.fn(), removeParticipant: jest.fn() };
-    return new LiveRoomsService(db as any, sfu as any);
+    return new LiveRoomsService(db as any, sfu as any, { create: jest.fn() } as any);
   }
 
   it('blocks a plain listener from changing another participant\'s role', async () => {
