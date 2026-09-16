@@ -4,7 +4,8 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 describe('PrayersService', () => {
   function makeService(queryImpl: (sql: string, params: any[]) => any) {
     const db = { query: jest.fn(queryImpl) };
-    return new PrayersService(db as any);
+    const embeddingIndexer = { indexPrayerRequest: jest.fn(), indexPost: jest.fn() };
+    return new PrayersService(db as any, embeddingIndexer as any);
   }
 
   it('throws NotFoundException when a request is not visible to the viewer', async () => {

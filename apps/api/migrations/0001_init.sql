@@ -43,7 +43,7 @@ create table user_roles (
   user_id uuid not null references users(id) on delete cascade,
   role_id uuid not null references roles(id) on delete cascade,
   scope_type text not null default 'platform',  -- platform | group | organization
-  scope_id uuid,                                  -- null for platform-scoped roles
+  scope_id uuid not null default '00000000-0000-0000-0000-000000000000',
   created_at timestamptz not null default now(),
   primary key (user_id, role_id, scope_type, scope_id)
 );

@@ -24,6 +24,6 @@
     "socket.io-client": "^4.7.5",
     "livekit-client": "^2.6.0",
     "@livekit/react-native": "^2.4.0",
-    "@livekit/react-native-webrtc": "^125.0.0"
+    "@livekit/react-native-webrtc": "^144.1.2"
   }
 }

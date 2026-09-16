@@ -4,7 +4,8 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 describe('PostsService', () => {
   function makeService(queryImpl: (sql: string, params: any[]) => any) {
     const db = { query: jest.fn(queryImpl) };
-    return new PostsService(db as any);
+    const embeddingIndexer = { indexPrayerRequest: jest.fn(), indexPost: jest.fn() };
+    return new PostsService(db as any, embeddingIndexer as any);
   }
 
   it('rejects an audio post with no mediaAssetId', async () => {
