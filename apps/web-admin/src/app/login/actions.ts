@@ -5,12 +5,6 @@ import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
-// This is the same /auth/login every mobile user hits — there is no separate
-// "admin login" endpoint (see docs/02-ARCHITECTURE.md section 6). What gates
-// entry to the console is the role check right after: a valid PrayerHubApp
-// account with no admin/moderator role logs in successfully but is redirected
-// straight back out with an explanatory message, never silently into a blank
-// dashboard.
 export async function login(_prevState: { error?: string } | undefined, formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -20,7 +14,12 @@ export async function login(_prevState: { error?: string } | undefined, formData
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  if (!loginRes.ok) return { error: 'Invalid email or password.' };
+  if (!loginRes.ok) {
+    if (loginRes.status === 401) return { error: 'Invalid email or password.' };
+    if (loginRes.status === 429) return { error: 'Too many login attempts — please wait a minute and try again.' };
+    const body = await loginRes.text().catch(() => '');
+    return { error: `Login failed (HTTP ${loginRes.status}): ${body.slice(0, 200)}` };
+  }
   const { accessToken } = await loginRes.json();
 
   const meRes = await fetch(`${API_URL}/admin/moderation/queue`, {
@@ -35,7 +34,7 @@ export async function login(_prevState: { error?: string } | undefined, formData
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 15, // matches the API's short-lived access token TTL
+    maxAge: 60 * 15,
     path: '/',
   });
   redirect('/dashboard');
