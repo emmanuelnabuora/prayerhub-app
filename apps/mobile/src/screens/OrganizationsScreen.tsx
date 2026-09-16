@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useOrganizations, useCreateOrganization } from '../api/organizations';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -62,6 +63,7 @@ export default function OrganizationsScreen({ navigation }: any) {
 }
 
 function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [type_, setType] = useState<'church' | 'ministry'>('church');
   const createOrg = useCreateOrganization();
@@ -77,8 +79,8 @@ function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClos
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Register a Church or Ministry</Text>
           <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} accessibilityLabel="Organization name" />
           <View style={styles.typeRow}>
@@ -98,9 +100,9 @@ function NewOrgModal({ visible, onClose, onCreated }: { visible: boolean; onClos
           <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={createOrg.isPending} accessibilityRole="button" accessibilityLabel="Register">
             {createOrg.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Register</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -120,8 +122,8 @@ const styles = StyleSheet.create({
   cardMeta: { color: colors.mutedText, fontSize: type.size.sm },
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: space.xl },
   emptyText: { textAlign: 'center', color: colors.mutedText, marginTop: space.md, fontSize: type.size.base },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
+  modalCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.xl, width: '100%', maxWidth: 420 },
   modalTitle: { fontFamily: type.fontFamily.display, fontSize: type.size.lg, marginBottom: space.md, color: colors.indigo },
   input: { borderWidth: 1, borderColor: colors.divider, borderRadius: radius.sm, padding: space.md, marginBottom: space.sm },
   typeRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.sm },

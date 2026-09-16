@@ -5,6 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useDailyVerse } from '../api/bible';
 import { useLiveRooms } from '../api/live';
 import { useSuggestedGroups } from '../api/ai';
+import { useCurrentUser } from '../api/users';
+import { useUnreadNotificationCount } from '../api/notifications';
 import { colors, type, space, radius, shadow } from '../theme';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
@@ -13,12 +15,14 @@ import FlameMark from '../components/FlameMark';
 // a deep-indigo header that yields to warm parchment content below, echoing
 // candlelight giving way to morning. The greeting is time-of-day aware rather
 // than a static string, which costs nothing and makes the app feel present.
-function timeOfDayGreeting() {
+function timeOfDayGreeting(name?: string) {
   const hour = new Date().getHours();
-  if (hour < 5) return 'Peace in the quiet hours';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Peace be with you this evening';
+  const firstName = name?.split(' ')[0];
+  const suffix = firstName ? `, ${firstName}` : '';
+  if (hour < 5) return `Peace in the quiet hours${suffix}`;
+  if (hour < 12) return `Good morning${suffix} 👋`;
+  if (hour < 18) return `Good afternoon${suffix} 👋`;
+  return `Peace be with you this evening${suffix}`;
 }
 
 export default function HomeScreen() {
@@ -26,21 +30,38 @@ export default function HomeScreen() {
   const { data: dailyVerse, isLoading: verseLoading } = useDailyVerse();
   const { data: rooms } = useLiveRooms();
   const { data: suggestedGroups } = useSuggestedGroups();
+  const { data: currentUser } = useCurrentUser();
+  const { data: unread } = useUnreadNotificationCount();
   const liveNow = rooms?.filter((r: any) => r.status === 'live') ?? [];
 
   return (
     <View style={styles.root}>
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.greeting} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting()}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Search')}
-            accessibilityRole="button"
-            accessibilityLabel="Search PrayerHubApp"
-            hitSlop={10}
-          >
-            <Text style={styles.searchIcon}>🔍</Text>
-          </TouchableOpacity>
+          <Text style={[styles.greeting, { flex: 1, marginRight: 12 }]} maxFontSizeMultiplier={1.4}>{timeOfDayGreeting(currentUser?.displayName)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Notifications')}
+              accessibilityRole="button"
+              accessibilityLabel={unread?.count ? `Notifications, ${unread.count} unread` : 'Notifications'}
+              hitSlop={10}
+            >
+              <Text style={styles.searchIcon}>🔔</Text>
+              {!!unread?.count && (
+                <View style={styles.notifBadge}>
+                  <Text style={styles.notifBadgeText}>{unread.count > 9 ? '9+' : unread.count}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Search')}
+              accessibilityRole="button"
+              accessibilityLabel="Search PrayerHubApp"
+              hitSlop={10}
+            >
+              <Text style={styles.searchIcon}>🔍</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -69,24 +90,29 @@ export default function HomeScreen() {
 
         {liveNow.length > 0 && (
           <FadeInView delay={80}>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Live Now</Text>
+            <Text style={styles.sectionLabel}>Live Now</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.liveScrollContent}
+            >
               {liveNow.map((room: any) => (
                 <TouchableOpacity
                   key={room.id}
-                  style={styles.rowItem}
+                  style={styles.liveCard}
                   onPress={() => navigation.getParent()?.navigate('Live', { screen: 'Room', params: { roomId: room.id } })}
                   accessibilityRole="button"
                   accessibilityLabel={`Join live room: ${room.title}, ${room.listenerCount} listening`}
                 >
-                  <View style={styles.liveDot} accessibilityElementsHidden importantForAccessibility="no" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{room.title}</Text>
-                    <Text style={styles.rowMeta}>{room.listenerCount} listening</Text>
+                  <View style={styles.liveCardBadge}>
+                    <View style={styles.liveDot} accessibilityElementsHidden importantForAccessibility="no" />
+                    <Text style={styles.liveCardBadgeText}>LIVE</Text>
                   </View>
+                  <Text style={styles.liveCardTitle} numberOfLines={1}>{room.title}</Text>
+                  <Text style={styles.liveCardMeta}>{room.listenerCount} listening</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </FadeInView>
         )}
 
@@ -144,6 +170,11 @@ const styles = StyleSheet.create({
     fontFamily: type.fontFamily.display, fontSize: type.size.xl, color: colors.textOnDark,
   },
   searchIcon: { fontSize: 20 },
+  notifBadge: {
+    position: 'absolute', top: -4, right: -6, backgroundColor: colors.live,
+    borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+  },
+  notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
   container: { flex: 1 },
   content: { padding: space.lg, paddingTop: space.lg, paddingBottom: space.xxl, marginTop: -space.lg },
   card: {
@@ -155,6 +186,19 @@ const styles = StyleSheet.create({
     fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase',
     letterSpacing: 0.6, marginBottom: space.sm, fontWeight: '600',
   },
+  sectionLabel: {
+    fontSize: type.size.xs, color: colors.mutedText, textTransform: 'uppercase',
+    letterSpacing: 0.6, marginBottom: space.sm, fontWeight: '600', marginHorizontal: space.lg,
+  },
+  liveScrollContent: { paddingHorizontal: space.lg, gap: space.sm, paddingBottom: space.md },
+  liveCard: {
+    backgroundColor: colors.card, borderRadius: radius.md, padding: space.md, minWidth: 150,
+    borderWidth: 1, borderColor: colors.cardBorder, ...shadow.card,
+  },
+  liveCardBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: space.sm },
+  liveCardBadgeText: { color: colors.live, fontSize: 10, fontWeight: '700' },
+  liveCardTitle: { color: colors.text, fontWeight: '600', fontSize: type.size.sm, marginBottom: 2 },
+  liveCardMeta: { color: colors.mutedText, fontSize: 11 },
   verseLoading: { paddingVertical: space.md, alignItems: 'flex-start' },
   verseText: {
     fontFamily: type.fontFamily.displayItalic, fontSize: type.size.md,

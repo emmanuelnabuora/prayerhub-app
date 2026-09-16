@@ -18,6 +18,9 @@ import { ModerationModule } from './moderation/moderation.module';
 import { AdminModule } from './admin/admin.module';
 
 import { HealthModule } from './health/health.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SearchModule } from './search/search.module';
+import { LegalModule } from './legal/legal.module';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { HealthModule } from './health/health.module';
     RecommendationsModule,
     ModerationModule,
     AdminModule,
+    NotificationsModule,
+    SearchModule,
+    LegalModule,
   ],
 })
 export class AppModule {}

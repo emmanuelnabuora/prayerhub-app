@@ -2,20 +2,38 @@ import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundExce
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { UpdateProfileDto } from './dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly db: Pool, private readonly notifications: NotificationsService) {}
 
   async findById(id: string, requestingUserId?: string) {
     const result = await this.db.query(
-      `select id, username, display_name, avatar_url, country, timezone, languages,
-              church_affiliation, bio, created_at
-       from users where id = $1 and deleted_at is null`,
+      `select u.id, u.username, u.display_name as "displayName", u.avatar_url as "avatarUrl",
+              u.country, u.timezone, u.languages,
+              u.church_affiliation as "churchAffiliation", u.bio, u.created_at as "createdAt",
+              coalesce(
+                (select array_agg(ui.interest) from user_interests ui where ui.user_id = u.id),
+                array[]::text[]
+              ) as interests,
+              (select count(*) from prayer_interactions pi where pi.user_id = u.id and pi.type = 'prayed') as "prayerCount",
+              (select count(*) from group_members gm where gm.user_id = u.id) as "groupCount",
+              (select count(*) from group_members gm join groups g on g.id = gm.group_id
+                 where gm.user_id = u.id and g.group_type = 'bible_study') as "studyCount",
+              (select count(*) from follows f where f.follower_id = u.id) as "followingCount"
+       from users u where u.id = $1 and u.deleted_at is null`,
       [id],
     );
     if (!result.rowCount) throw new NotFoundException('User not found');
-    return result.rows[0];
+    const row = result.rows[0];
+    return {
+      ...row,
+      prayerCount: Number(row.prayerCount),
+      groupCount: Number(row.groupCount),
+      studyCount: Number(row.studyCount),
+      followingCount: Number(row.followingCount),
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
@@ -58,6 +76,7 @@ export class UsersService {
       `insert into follows (follower_id, followee_id) values ($1, $2) on conflict do nothing`,
       [followerId, followeeId],
     );
+    await this.notifications.create(followeeId, 'new_follower', { followerId });
     return { success: true };
   }
 
@@ -75,6 +94,22 @@ export class UsersService {
       [blockerId, blockedId],
     );
     return { success: true };
+  }
+
+  async unblock(blockerId: string, blockedId: string) {
+    await this.db.query('delete from blocks where blocker_id = $1 and blocked_id = $2', [blockerId, blockedId]);
+    return { success: true };
+  }
+
+  async listBlocked(userId: string) {
+    const result = await this.db.query(
+      `select u.id, u.username, u.display_name as "displayName", u.avatar_url as "avatarUrl"
+       from blocks b join users u on u.id = b.blocked_id
+       where b.blocker_id = $1
+       order by b.created_at desc`,
+      [userId],
+    );
+    return result.rows;
   }
 
   async listFollowers(userId: string) {
@@ -103,5 +138,13 @@ export class UsersService {
       [`%${query}%`],
     );
     return result.rows;
+  }
+
+  // Soft-delete, matching the deleted_at pattern used everywhere else in this
+  // schema — never hard-deletes a row, so moderation/audit history referencing
+  // this user (reports, past messages, etc.) stays intact.
+  async deleteAccount(userId: string) {
+    await this.db.query('update users set deleted_at = now() where id = $1', [userId]);
+    return { success: true };
   }
 }

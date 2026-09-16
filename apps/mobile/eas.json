@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 23.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://prayerhub-api-216827842410.us-central1.run.app/api/v1"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://prayerhub-api-216827842410.us-central1.run.app/api/v1"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://prayerhub-api-216827842410.us-central1.run.app/api/v1"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

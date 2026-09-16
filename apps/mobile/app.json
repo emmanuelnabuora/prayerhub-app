@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "PrayerHubApp",
+    "slug": "prayerhubapp",
+    "scheme": "prayerhubapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#071827"
+    },
+    "android": {
+      "package": "com.prayerhubapp.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#071827"
+      },
+      "permissions": ["RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"]
+    },
+    "ios": {
+      "bundleIdentifier": "com.prayerhubapp.mobile",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "PrayerHubApp needs microphone access so you can speak in live prayer rooms.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "plugins": [
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "04ed9c91-3eab-424e-91cc-9459e01806f5"
+      }
+    }
+  }
+}

@@ -1,7 +1,8 @@
 import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
-import { CreateGroupDto, UpdateGroupDto, ChangeMemberRoleDto, SetScheduleDto } from './dto';
+import { CreateGroupDto, UpdateGroupDto, ChangeMemberRoleDto, SetScheduleDto, PostDiscussionDto } from './dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Visibility rules for discovery, mirroring the same defense-in-depth pattern used
 // for prayer_requests: private/invite_only groups are only ever returned if the
@@ -13,7 +14,7 @@ const DISCOVERY_CLAUSE = `
 
 @Injectable()
 export class GroupsService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly db: Pool, private readonly notifications: NotificationsService) {}
 
   async create(userId: string, dto: CreateGroupDto) {
     const result = await this.db.query(
@@ -181,6 +182,11 @@ export class GroupsService {
          on conflict do nothing`,
         [row.group_id, row.invited_user_id],
       );
+      const group = await this.db.query('select name from groups where id = $1', [row.group_id]);
+      await this.notifications.create(row.invited_user_id, 'group_join_approved', {
+        groupId: row.group_id,
+        groupName: group.rows[0]?.name,
+      });
     }
     return { success: true };
   }
@@ -236,6 +242,34 @@ export class GroupsService {
     if (role !== 'leader' && role !== 'moderator') throw new ForbiddenException('Leader/moderator only');
   }
 
+  async listDiscussions(groupId: string, userId: string) {
+    const membership = await this.db.query(
+      "select 1 from group_members where group_id = $1 and user_id = $2",
+      [groupId, userId],
+    );
+    if (!membership.rowCount) throw new ForbiddenException("Not a member of that group");
+    const result = await this.db.query(
+      `select gd.id, gd.body, gd.scripture_reference as "scriptureReference", gd.created_at as "createdAt",
+              u.id as "authorId", u.display_name as "authorName", u.avatar_url as "authorAvatarUrl"
+       from group_discussions gd join users u on u.id = gd.user_id
+       where gd.group_id = $1 order by gd.created_at asc`,
+      [groupId],
+    );
+    return result.rows;
+  }
+  async postDiscussion(groupId: string, userId: string, dto: PostDiscussionDto) {
+    const membership = await this.db.query(
+      "select 1 from group_members where group_id = $1 and user_id = $2",
+      [groupId, userId],
+    );
+    if (!membership.rowCount) throw new ForbiddenException("Not a member of that group");
+    const result = await this.db.query(
+      `insert into group_discussions (group_id, user_id, body, scripture_reference)
+       values ($1, $2, $3, $4) returning id, created_at`,
+      [groupId, userId, dto.body, dto.scriptureReference ?? null],
+    );
+    return result.rows[0];
+  }
   private serialize(row: any) {
     return {
       id: row.id,

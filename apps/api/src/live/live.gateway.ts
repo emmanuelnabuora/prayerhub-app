@@ -5,6 +5,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { LiveRoomsService } from './live.service';
 
 // This gateway carries *app-state* events (hand raised, someone promoted, reactions,
 // listener joined/left) — NOT audio. Audio media flows directly between clients and
@@ -16,7 +17,7 @@ export class LiveGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(LiveGateway.name);
 
-  constructor(private readonly jwt: JwtService) {}
+  constructor(private readonly jwt: JwtService, private readonly liveRooms: LiveRoomsService) {}
 
   async handleConnection(socket: Socket) {
     try {
@@ -29,10 +30,15 @@ export class LiveGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(socket: Socket) {
+  async handleDisconnect(socket: Socket) {
     const roomId = socket.data.roomId;
-    if (roomId) {
+    if (roomId && socket.data.userId) {
       this.server.to(roomId).emit('participant_left', { userId: socket.data.userId });
+      try {
+        await this.liveRooms.handleParticipantDisconnect(roomId, socket.data.userId);
+      } catch (err) {
+        this.logger.warn(`Failed to process disconnect cleanup for room ${roomId}: ${err}`);
+      }
     }
   }
 

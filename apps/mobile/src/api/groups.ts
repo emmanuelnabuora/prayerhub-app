@@ -62,3 +62,20 @@ export function useSetGroupSchedule(groupId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups', groupId] }),
   });
 }
+
+export function useGroupDiscussions(groupId: string | undefined) {
+  return useQuery({
+    queryKey: ['groups', groupId, 'discussions'],
+    queryFn: async () => (await api.get(`/groups/${groupId}/discussions`)).data,
+    enabled: !!groupId,
+  });
+}
+
+export function usePostDiscussion(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (post: { body: string; scriptureReference?: string }) =>
+      (await api.post(`/groups/${groupId}/discussions`, post)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups', groupId, 'discussions'] }),
+  });
+}

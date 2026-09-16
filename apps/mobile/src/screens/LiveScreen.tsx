@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useLiveRooms, useCreateRoom } from '../api/live';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -66,12 +67,14 @@ export default function LiveScreen({ navigation }: any) {
 }
 
 function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('Morning Prayer');
   const createRoom = useCreateRoom();
 
   const submit = () => {
     if (!title.trim()) return;
+    Keyboard.dismiss();
     createRoom.mutate(
       { title, topic },
       { onSuccess: (room) => { setTitle(''); onClose(); onCreated(room.id); } },
@@ -80,8 +83,11 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Start a Prayer Room</Text>
           <TextInput style={styles.input} placeholder="Room title" value={title} onChangeText={setTitle} accessibilityLabel="Room title" />
           <TextInput style={styles.input} placeholder="Topic (e.g. Healing Prayer)" value={topic} onChangeText={setTopic} accessibilityLabel="Room topic" />
@@ -94,11 +100,11 @@ function NewRoomModal({ visible, onClose, onCreated }: { visible: boolean; onClo
           >
             {createRoom.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Go Live</Text>}
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel">
+          <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} accessibilityRole="button" accessibilityLabel="Cancel">
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -122,8 +128,8 @@ const styles = StyleSheet.create({
   cardMeta: { color: colors.mutedText, fontSize: type.size.sm },
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: space.xl },
   emptyText: { textAlign: 'center', color: colors.mutedText, marginTop: space.md, fontSize: type.size.base },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
+  modalCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.xl, width: '100%', maxWidth: 420 },
   modalTitle: { fontFamily: type.fontFamily.display, fontSize: type.size.lg, marginBottom: space.md, color: colors.indigo },
   input: { borderWidth: 1, borderColor: colors.divider, borderRadius: radius.sm, padding: space.md, marginBottom: space.sm },
   submitButton: { backgroundColor: colors.indigo, borderRadius: radius.md, padding: space.md, alignItems: 'center', marginBottom: space.sm },

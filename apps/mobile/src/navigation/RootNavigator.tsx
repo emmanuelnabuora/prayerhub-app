@@ -20,7 +20,11 @@ import TestimoniesScreen from '../screens/TestimoniesScreen';
 import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import AssistantScreen from '../screens/AssistantScreen';
-import { theme } from '../theme';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import MiniPlayer from '../components/MiniPlayer';
+import { theme, colors } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -36,6 +40,7 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="Journal" component={JournalScreen} />
       <ProfileStack.Screen name="Conversations" component={ConversationsScreen} />
       <ProfileStack.Screen name="Chat" component={ChatScreen} />
+      <ProfileStack.Screen name="Settings" component={SettingsScreen} />
     </ProfileStack.Navigator>
   );
 }
@@ -90,6 +95,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="BibleReader" component={BibleReaderScreen} />
       <HomeStack.Screen name="Chat" component={ChatScreen} />
       <HomeStack.Screen name="Assistant" component={AssistantScreen} />
+      <HomeStack.Screen name="Notifications" component={NotificationsScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -100,16 +106,41 @@ export default function RootNavigator() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: theme.colors.indigo,
-          tabBarInactiveTintColor: theme.colors.mutedText,
+          tabBarActiveTintColor: colors.flame,
+          tabBarInactiveTintColor: colors.mutedText,
+          tabBarStyle: {
+            backgroundColor: colors.parchment,
+            borderTopColor: colors.divider,
+          },
         }}
       >
-        <Tab.Screen name="Home" component={HomeStackNavigator} />
-        <Tab.Screen name="Pray" component={PrayStackNavigator} />
-        <Tab.Screen name="Live" component={LiveStackNavigator} />
-        <Tab.Screen name="Community" component={CommunityStackNavigator} />
-        <Tab.Screen name="Profile" component={ProfileStackNavigator} />
+        <Tab.Screen
+          name="Home"
+          component={HomeStackNavigator}
+          options={{ tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} /> }}
+        />
+        <Tab.Screen
+          name="Pray"
+          component={PrayStackNavigator}
+          options={{ tabBarIcon: ({ color, size }) => <Ionicons name="hand-left-outline" color={color} size={size} /> }}
+        />
+        <Tab.Screen
+          name="Live"
+          component={LiveStackNavigator}
+          options={{ tabBarIcon: ({ color, size }) => <Ionicons name="radio-outline" color={color} size={size} /> }}
+        />
+        <Tab.Screen
+          name="Community"
+          component={CommunityStackNavigator}
+          options={{ tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" color={color} size={size} /> }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileStackNavigator}
+          options={{ tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={color} size={size} /> }}
+        />
       </Tab.Navigator>
+      <MiniPlayer />
     </NavigationContainer>
   );
 }

@@ -4,6 +4,7 @@ import { PG_POOL } from '../database/database.module';
 import { SfuProvider } from './sfu.provider';
 import { CreateRoomDto, RoomRoleChangeDto } from './dto';
 import { randomUUID } from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Room membership/role state is written to Postgres on every change (source of
 // truth for history/moderation, per docs/02-ARCHITECTURE.md section 3). A real
@@ -16,6 +17,7 @@ export class LiveRoomsService {
   constructor(
     @Inject(PG_POOL) private readonly db: Pool,
     private readonly sfu: SfuProvider,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list() {
@@ -58,6 +60,10 @@ export class LiveRoomsService {
       await this.sfu.createRoom(sfuRoomName);
       await this.upsertParticipant(room.id, hostId, 'host', false);
       await this.logEvent(room.id, hostId, undefined, 'joined', { role: 'host' });
+      const followers = await this.db.query('select follower_id from follows where followee_id = $1', [hostId]);
+      for (const f of followers.rows) {
+        await this.notifications.create(f.follower_id, 'room_live', { roomId: room.id, hostId, title: dto.title });
+      }
     }
 
     return this.serializeRoom({ ...room, host_username: null, host_display_name: null, listener_count: isImmediate ? 1 : 0 });
@@ -175,6 +181,42 @@ export class LiveRoomsService {
     );
     await this.sfu.endRoom(room.sfu_room_name);
     return { success: true };
+  }
+
+  // Called from LiveGateway's handleDisconnect — a socket dropping (crash, network
+  // loss, force-close) previously left both room_participants and live_rooms
+  // completely unchanged: the person stayed listed as present forever, and if they
+  // were the host, the room stayed status='live' with no way to close it short of
+  // the host manually reconnecting and tapping End Room. This makes disconnect do
+  // what leaving on purpose already does.
+  async handleParticipantDisconnect(roomId: string, userId: string) {
+    const participant = await this.db.query(
+      'select role from room_participants where room_id = $1 and user_id = $2 and left_at is null',
+      [roomId, userId],
+    );
+    if (!participant.rowCount) return;
+    await this.db.query(
+      'update room_participants set left_at = now() where room_id = $1 and user_id = $2',
+      [roomId, userId],
+    );
+    if (participant.rows[0].role === 'host') {
+      const room = await this.db.query(
+        "select sfu_room_name from live_rooms where id = $1 and status = 'live'",
+        [roomId],
+      );
+      if (room.rowCount) {
+        await this.db.query(
+          `update live_rooms set status = 'ended', ended_at = now(), updated_at = now() where id = $1`,
+          [roomId],
+        );
+        await this.db.query(
+          `update room_participants set left_at = now() where room_id = $1 and left_at is null`,
+          [roomId],
+        );
+        await this.sfu.endRoom(room.rows[0].sfu_room_name);
+        await this.logEvent(roomId, userId, undefined, 'host_disconnected_room_ended', {});
+      }
+    }
   }
 
   private async upsertParticipant(roomId: string, userId: string, role: string, muted: boolean) {

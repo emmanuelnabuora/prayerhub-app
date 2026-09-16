@@ -153,6 +153,19 @@ export class OrganizationsService {
     if (!result.rowCount) throw new ForbiddenException('Organization leader only');
   }
 
+  async listPrayers(orgId: string) {
+    const result = await this.db.query(
+      `select pr.id, pr.title, pr.description, pr.prayed_count as "prayedCount",
+              pr.created_at as "createdAt", u.display_name as "authorName"
+       from prayer_requests pr
+       join users u on u.id = pr.user_id
+       where pr.group_id in (select id from groups where organization_id = $1)
+         and pr.visibility != 'private'
+       order by pr.created_at desc limit 30`,
+      [orgId],
+    );
+    return result.rows;
+  }
   private serialize(row: any) {
     return {
       id: row.id,

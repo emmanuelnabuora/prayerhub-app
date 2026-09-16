@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFeed, useCreatePost, useReactToPost } from '../api/social';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -65,6 +66,7 @@ export default function FeedScreen() {
 }
 
 function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const [type_, setType] = useState<'text' | 'scripture'>('text');
   const [body, setBody] = useState('');
   const [scriptureReference, setScriptureReference] = useState('');
@@ -79,8 +81,11 @@ function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => v
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Share with the Community</Text>
           <View style={styles.typeRow}>
             {(['text', 'scripture'] as const).map((t) => (
@@ -111,7 +116,7 @@ function NewPostModal({ visible, onClose }: { visible: boolean; onClose: () => v
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -134,8 +139,8 @@ const styles = StyleSheet.create({
   cardMeta: { color: colors.mutedText, fontSize: type.size.xs },
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: space.xl },
   emptyText: { textAlign: 'center', color: colors.mutedText, marginTop: space.md, fontSize: type.size.base },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
+  modalCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.xl, width: '100%', maxWidth: 420 },
   modalTitle: { fontFamily: type.fontFamily.display, fontSize: type.size.lg, marginBottom: space.md, color: colors.indigo },
   typeRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   typeChip: { borderWidth: 1, borderColor: colors.divider, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: 6 },

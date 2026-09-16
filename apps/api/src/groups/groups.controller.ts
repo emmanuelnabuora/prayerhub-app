@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GroupsService } from './groups.service';
-import { CreateGroupDto, UpdateGroupDto, InviteMemberDto, ChangeMemberRoleDto, SetScheduleDto } from './dto';
+import { CreateGroupDto, UpdateGroupDto, InviteMemberDto, ChangeMemberRoleDto, SetScheduleDto, PostDiscussionDto } from './dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('groups')
@@ -76,5 +76,15 @@ export class GroupsController {
   @Patch(':id/schedule')
   setSchedule(@Param('id') id: string, @Req() req: any, @Body() dto: SetScheduleDto) {
     return this.groupsService.setSchedule(id, req.user.userId, dto);
+  }
+
+  @Get(':id/discussions')
+  listDiscussions(@Param('id') id: string, @Req() req: any) {
+    return this.groupsService.listDiscussions(id, req.user.userId);
+  }
+
+  @Post(':id/discussions')
+  postDiscussion(@Param('id') id: string, @Req() req: any, @Body() dto: PostDiscussionDto) {
+    return this.groupsService.postDiscussion(id, req.user.userId, dto);
   }
 }

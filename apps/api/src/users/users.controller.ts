@@ -18,9 +18,19 @@ export class UsersController {
     return this.usersService.updateProfile(req.user.userId, dto);
   }
 
+  @Delete('me')
+  deleteAccount(@Req() req: any) {
+    return this.usersService.deleteAccount(req.user.userId);
+  }
+
   @Get('search')
   search(@Query('q') q: string) {
     return this.usersService.search(q ?? '');
+  }
+
+  @Get('blocked')
+  listBlocked(@Req() req: any) {
+    return this.usersService.listBlocked(req.user.userId);
   }
 
   @Get(':id')
@@ -42,6 +52,11 @@ export class UsersController {
   @Post(':id/block')
   block(@Param('id') id: string, @Req() req: any) {
     return this.usersService.block(req.user.userId, id);
+  }
+
+  @Delete(':id/block')
+  unblock(@Param('id') id: string, @Req() req: any) {
+    return this.usersService.unblock(req.user.userId, id);
   }
 
   @Get(':id/followers')

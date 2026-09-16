@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useDiscoverGroups, useMyGroups, useCreateGroup, useJoinGroup } from '../api/groups';
 import { colors, type, space, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FadeInView from '../components/FadeInView';
 import FlameMark from '../components/FlameMark';
 
@@ -108,26 +109,42 @@ export default function CommunityScreen({ navigation }: any) {
 }
 
 function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private' | 'invite_only'>('public');
+  const [groupType, setGroupType] = useState<'prayer' | 'cell' | 'bible_study'>('prayer');
   const createGroup = useCreateGroup();
 
   const submit = () => {
     if (!name.trim()) return;
+    Keyboard.dismiss();
     createGroup.mutate(
-      { name, description, visibility },
+      { name, description, visibility, groupType },
       { onSuccess: (group) => { setName(''); setDescription(''); onClose(); onCreated(group.id); } },
     );
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <View style={[styles.modalCard, { paddingBottom: space.xl + insets.bottom }]}>
           <Text style={styles.modalTitle}>Start a Group</Text>
           <TextInput style={styles.input} placeholder="Group name" value={name} onChangeText={setName} accessibilityLabel="Group name" />
           <TextInput style={[styles.input, styles.textArea]} placeholder="Description" value={description} onChangeText={setDescription} multiline accessibilityLabel="Group description" />
+          <View style={styles.visibilityRow}>
+            {(["prayer", "cell", "bible_study"] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.visibilityChip, groupType === t && styles.visibilityChipActive]}
+                onPress={() => setGroupType(t)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: groupType === t }}
+              >
+                <Text style={groupType === t ? styles.visibilityTextActive : styles.visibilityText}>{t.replace("_", " ")}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <View style={styles.visibilityRow}>
             {(['public', 'private', 'invite_only'] as const).map((v) => (
               <TouchableOpacity
@@ -146,7 +163,7 @@ function NewGroupModal({ visible, onClose, onCreated }: { visible: boolean; onCl
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel"><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -178,8 +195,8 @@ const styles = StyleSheet.create({
   joinButtonText: { color: colors.indigo, fontWeight: '700', fontSize: type.size.xs },
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: space.xl },
   emptyText: { textAlign: 'center', color: colors.mutedText, marginTop: space.md, fontSize: type.size.base },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(31,30,51,0.45)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
+  modalCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.xl, width: '100%', maxWidth: 420 },
   modalTitle: { fontFamily: type.fontFamily.display, fontSize: type.size.lg, marginBottom: space.md, color: colors.indigo },
   input: { borderWidth: 1, borderColor: colors.divider, borderRadius: radius.sm, padding: space.md, marginBottom: space.sm },
   textArea: { height: 70, textAlignVertical: 'top' },

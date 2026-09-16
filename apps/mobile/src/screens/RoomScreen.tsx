@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator }
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoom, useJoinRoomToken, useRaiseHand, useChangeRole, useRemoveParticipant, useEndRoom } from '../api/live';
 import { useLiveSocket } from '../audio/useLiveSocket';
-import { useLiveKitRoom } from '../audio/useLiveKitRoom';
+import { useLiveRoomContext } from '../live/LiveRoomContext';
 import SpeakerTile from '../components/SpeakerTile';
 import FlameMark from '../components/FlameMark';
 import { colors, type, space, radius } from '../theme';
@@ -12,7 +12,7 @@ import { colors, type, space, radius } from '../theme';
 // listener) drive both the mic UI and what actions are offered — a listener
 // never even sees a mute button, because they were never issued publish
 // rights by the SFU token in the first place (apps/api/src/live/sfu.provider.ts).
-export default function RoomScreen({ route }: any) {
+export default function RoomScreen({ route, navigation }: any) {
   const { roomId } = route.params;
   const { data: room, refetch } = useRoom(roomId);
   const joinToken = useJoinRoomToken(roomId);
@@ -30,11 +30,23 @@ export default function RoomScreen({ route }: any) {
     onParticipantRemoved: () => refetch(),
   });
 
-  const { connected, activeSpeakers, setMicEnabled } = useLiveKitRoom(tokenData?.sfuUrl, tokenData?.token);
+  const { activeRoom, joinRoom, leaveRoom, setMicEnabled } = useLiveRoomContext();
+  const connected = activeRoom?.roomId === roomId && activeRoom.connected;
+  const activeSpeakers = activeRoom?.roomId === roomId ? activeRoom.activeSpeakers : [];
+  const unsupported = activeRoom?.roomId === roomId && activeRoom.unsupported;
 
   React.useEffect(() => {
     joinToken.mutate(undefined, { onSuccess: setTokenData });
   }, [roomId]);
+
+  // Connects via the app-root LiveRoomProvider rather than owning the
+  // connection here — this is what lets the mini-player keep audio alive
+  // when the user navigates away without explicitly leaving/ending.
+  React.useEffect(() => {
+    if (tokenData?.sfuUrl && tokenData?.token && room) {
+      joinRoom({ roomId, title: room.title, sfuUrl: tokenData.sfuUrl, token: tokenData.token });
+    }
+  }, [tokenData?.sfuUrl, tokenData?.token, room?.title]);
 
   const isModerator = tokenData?.role === 'host' || tokenData?.role === 'co_host';
   const canSpeak = tokenData?.role === 'host' || tokenData?.role === 'co_host' || tokenData?.role === 'speaker';
@@ -44,6 +56,17 @@ export default function RoomScreen({ route }: any) {
       <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.loadingRoot}>
         <FlameMark size={44} />
         <Text style={styles.loadingText}>Entering the room…</Text>
+      </LinearGradient>
+    );
+  }
+
+  if (unsupported) {
+    return (
+      <LinearGradient colors={[colors.indigoDeep, colors.indigo]} style={styles.loadingRoot}>
+        <FlameMark size={44} />
+        <Text style={styles.loadingText}>
+          Live audio needs the full PrayerHubApp build{'\n'}(not available in Expo Go preview)
+        </Text>
       </LinearGradient>
     );
   }
@@ -99,14 +122,23 @@ export default function RoomScreen({ route }: any) {
             <Text style={styles.handButtonText}>✋ Raise Hand</Text>
           </TouchableOpacity>
         )}
-        {tokenData?.role === 'host' && (
+        {tokenData?.role === 'host' ? (
           <TouchableOpacity
             style={styles.endButton}
-            onPress={() => endRoom.mutate()}
+            onPress={() => endRoom.mutate(undefined, { onSuccess: () => { leaveRoom(); navigation.goBack(); } })}
             accessibilityRole="button"
             accessibilityLabel="End the prayer room for everyone"
           >
             <Text style={styles.endButtonText}>End Room</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.leaveButton}
+            onPress={() => { leaveRoom(); navigation.goBack(); }}
+            accessibilityRole="button"
+            accessibilityLabel="Leave the room quietly"
+          >
+            <Text style={styles.leaveButtonText}>Leave Quietly</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -131,4 +163,6 @@ const styles = StyleSheet.create({
   handButtonText: { color: '#fff', fontWeight: '700' },
   endButton: { backgroundColor: colors.danger, borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md },
   endButtonText: { color: '#fff', fontWeight: '700' },
+  leaveButton: { backgroundColor: 'transparent', borderRadius: radius.pill, paddingHorizontal: space.xl, paddingVertical: space.md },
+  leaveButtonText: { color: 'rgba(255,255,255,0.6)', fontWeight: '600' },
 });
